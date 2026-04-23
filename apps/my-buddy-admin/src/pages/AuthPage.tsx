@@ -1,5 +1,6 @@
 import { motion, type Variants } from 'framer-motion';
 import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // <-- 1. React Router එකෙන් useNavigate ගත්තා
 import logo from '../assets/images/logo.png'; 
 
 const containerVariants: Variants = {
@@ -16,6 +17,14 @@ const itemVariants: Variants = {
 };
 
 export default function AuthPage() {
+  const navigate = useNavigate(); // <-- 2. Navigate function එක හදාගත්තා
+
+  // 3. Button එක එබුවම වෙන දේ (Page refresh වෙන එක නවත්තලා Dashboard එකට යවනවා)
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate('/dashboard');
+  };
+
   return (
     <div className="h-screen w-full flex bg-[#0a0a0a] text-white font-sans overflow-hidden">
       
@@ -162,7 +171,8 @@ export default function AuthPage() {
                 </p>
               </motion.div>
 
-              <form className="space-y-5">
+              {/* 4. මෙතන form එකට onSubmit එක සෙට් කළා */}
+              <form className="space-y-5" onSubmit={handleLogin}>
                 <motion.div variants={itemVariants} className="group relative">
                   <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-500 group-focus-within:text-brand-green transition-colors" />
                   <input 
@@ -195,6 +205,7 @@ export default function AuthPage() {
                   variants={itemVariants}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  type="submit" // <-- 5. type එක submit කළා
                   className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]"
                 >
                   <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />

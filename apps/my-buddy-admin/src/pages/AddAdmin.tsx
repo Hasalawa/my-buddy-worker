@@ -68,7 +68,7 @@ export default function AddAdmin() {
                   <div className="relative group">
                     <input 
                       type="text" 
-                      placeholder="e.g. Tharindra Dasuni" 
+                      placeholder="e.g. Kehan Hasalawa" 
                       className="w-full bg-gray-900/50 text-white border border-gray-800 rounded-xl py-2.5 sm:py-3 pl-4 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-600 text-sm sm:text-base"
                     />
                   </div>
