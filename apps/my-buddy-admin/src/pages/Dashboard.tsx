@@ -5,13 +5,6 @@ import {
   Briefcase,
   DollarSign,
   Activity,
-  Bell,
-  Search,
-  Menu,
-  ChevronDown,
-  LayoutDashboard,
-  Settings,
-  LogOut,
   GraduationCap,
   CheckCircle2,
   Clock,
@@ -27,7 +20,6 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import logo from "../assets/images/logo.png";
 
 // --- Dummy Data for Charts ---
 const revenueData = [
@@ -60,96 +52,10 @@ const itemVariants: Variants = {
 };
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [revenueFilter, setRevenueFilter] = useState("This Week");
 
   return (
-    <div className="h-screen w-full flex bg-[#0a0a0a] text-white font-sans overflow-hidden selection:bg-brand-green/30">
-      {/* ================= SIDEBAR ================= */}
-      <motion.aside
-        initial={{ x: -300 }}
-        animate={{
-          x: sidebarOpen ? 0 : -300,
-          width: sidebarOpen ? "280px" : "0px",
-        }}
-        transition={{ duration: 0.3, type: "tween" }}
-        className="h-full bg-[#111111] border-r border-gray-800/50 flex flex-col z-20 relative"
-      >
-        <div className="p-6 flex items-center gap-4">
-          <img
-            src={logo}
-            alt="My Buddy Worker"
-            className="h-10 object-contain drop-shadow-lg"
-          />
-          <span className="font-bold text-xl tracking-tight">
-            Admin<span className="text-brand-green">Portal</span>
-          </span>
-        </div>
-
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          <NavItem icon={LayoutDashboard} label="Dashboard" active />
-          <NavItem icon={GraduationCap} label="Students (Workers)" />
-          <NavItem icon={Briefcase} label="Buyers (Employers)" />
-          <NavItem icon={Activity} label="Job Listings" />
-          <NavItem icon={DollarSign} label="Payments" />
-        </nav>
-
-        <div className="p-4 border-t border-gray-800/50">
-          <NavItem icon={Settings} label="Settings" />
-          <NavItem
-            icon={LogOut}
-            label="Logout"
-            textClass="text-red-400 hover:text-red-300"
-          />
-        </div>
-      </motion.aside>
-
-      {/* ================= MAIN CONTENT ================= */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Ambient Background Glows */}
-        <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] bg-brand-green/10 rounded-full blur-[150px] pointer-events-none" />
-
-        {/* Header */}
-        <header className="h-20 border-b border-gray-800/50 bg-[#0a0a0a]/80 backdrop-blur-md flex items-center justify-between px-6 z-10">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
-            >
-              <Menu size={24} />
-            </button>
-            <div className="hidden md:flex items-center gap-2 bg-gray-900/50 border border-gray-800 rounded-full px-4 py-2">
-              <Search size={18} className="text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search users, jobs..."
-                className="bg-transparent border-none outline-none text-sm w-64 placeholder:text-gray-600"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button className="relative text-gray-400 hover:text-white transition-colors">
-              <Bell size={22} />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand-green rounded-full border-2 border-[#0a0a0a]"></span>
-            </button>
-            <div className="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-800">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-green to-emerald-600 flex items-center justify-center font-bold shadow-[0_0_15px_rgba(0,204,68,0.2)]">
-                K
-              </div>
-              <div className="hidden md:block">
-                <p className="text-sm font-semibold">Kehan Hasalawa</p>
-                <p className="text-xs text-brand-green font-medium">
-                  Super Admin
-                </p>
-              </div>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-          </div>
-        </header>
-
-        {/* Dashboard Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-8 z-10 custom-scrollbar">
+    
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -382,29 +288,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </motion.div>
-        </div>
-      </main>
-    </div>
-  );
-}
 
-// --- Reusable Sub-components ---
-
-function NavItem({ icon: Icon, label, active = false, textClass = "" }: any) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all group ${active ? "bg-brand-green/10 text-brand-green" : "text-gray-400 hover:bg-gray-800 hover:text-white"} ${textClass}`}
-    >
-      <Icon
-        size={20}
-        className={
-          active
-            ? "text-brand-green"
-            : "text-gray-500 group-hover:text-gray-300"
-        }
-      />
-      <span className="font-medium text-sm">{label}</span>
-    </div>
   );
 }
 
@@ -501,10 +385,7 @@ function CustomDropdown({ options, value, onChange }: any) {
         className="flex items-center gap-2 bg-gray-900 border border-gray-800 text-sm rounded-lg px-3 py-1.5 outline-none focus:border-brand-green hover:border-gray-700 transition-colors text-white"
       >
         {value}
-        <ChevronDown
-          size={14}
-          className={`text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-        />
+        
       </button>
 
       <AnimatePresence>
