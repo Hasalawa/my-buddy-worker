@@ -7,6 +7,7 @@ import Users from "./pages/Users";
 import Jobs from "./pages/Jobs";
 import Finance from "./pages/Finance";
 import Support from "./pages/Support";
+import Flagged from "./pages/Flagged";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/flagged" element={<Flagged />} />
           {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
           <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>
