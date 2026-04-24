@@ -3,6 +3,7 @@ import AuthPage from "./pages/AuthPage";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import AddAdmin from "./pages/AddAdmin"; // අපි කලින් හදපු එක
+import Users from "./pages/Users";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route element={<AdminLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/add-admin" element={<AddAdmin />} />
+          <Route path="/users" element={<Users />} />
           {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
           <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>
