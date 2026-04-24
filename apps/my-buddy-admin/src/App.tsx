@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import AddAdmin from "./pages/AddAdmin"; // අපි කලින් හදපු එක
 import Users from "./pages/Users";
 import Jobs from "./pages/Jobs";
+import Finance from "./pages/Finance";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/add-admin" element={<AddAdmin />} />
           <Route path="/users" element={<Users />} />
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/finance" element={<Finance />} />
           {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
           <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>
