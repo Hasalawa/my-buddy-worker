@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
@@ -11,6 +11,7 @@ import Flagged from "./pages/Flagged";
 import AuditLogs from "./pages/AuditLogs";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -36,7 +37,8 @@ function App() {
         </Route>
 
         {/* වැරදි ලින්ක් එකකට ගියොත් Dashboard එකට යවන්න */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
