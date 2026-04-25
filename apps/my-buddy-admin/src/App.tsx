@@ -9,6 +9,8 @@ import Finance from "./pages/Finance";
 import Support from "./pages/Support";
 import Flagged from "./pages/Flagged";
 import AuditLogs from "./pages/AuditLogs";
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/flagged" element={<Flagged />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
           <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>
