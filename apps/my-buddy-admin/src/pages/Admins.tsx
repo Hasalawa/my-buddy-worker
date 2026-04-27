@@ -19,7 +19,7 @@ const itemVariants: Variants = {
 // --- Dummy Data ---
 const adminData = [
   { id: 'ADM-001', name: 'Kehan Hasalawa', email: 'kehan@mybuddyworker.com', role: 'Super Admin', status: 'Active', lastActive: 'Just now', permissions: ['All Access'] },
-  { id: 'ADM-002', name: 'Tharindra Dasuni', email: 'tharindra@mybuddyworker.com', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
+  { id: 'ADM-002', name: 'Sahan Dilshan', email: 'tharindra@mybuddyworker.com', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
   { id: 'ADM-003', name: 'Nimal Perera', email: 'nimal@mybuddyworker.com', role: 'Moderator', status: 'Offline', lastActive: '2 days ago', permissions: ['Jobs', 'Support'] },
   { id: 'ADM-004', name: 'Kasun Kalhara', email: 'kasun@mybuddyworker.com', role: 'Moderator', status: 'Suspended', lastActive: '1 month ago', permissions: ['None'] },
 ];
