@@ -62,7 +62,7 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
         <NavItem icon={ShieldAlert} label="Flagged Content" path="/flagged" />
 
         <p className="px-4 text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2 mt-6">System</p>
-        <NavItem icon={UserPlus} label="Administrators" path="/add-admin" />
+        <NavItem icon={UserPlus} label="Administrators" path="/admins" />
         <NavItem icon={FileText} label="Audit Logs" path="/audit-logs" />
       </nav>
 
