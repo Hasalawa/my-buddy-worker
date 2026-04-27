@@ -61,10 +61,10 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="h-screen w-full flex bg-[#0a0a0a] text-white font-sans overflow-hidden">
+    <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300">
       
       {/* ---------------- LEFT SIDE: Branding & Visuals (කලින් විදියටමයි) ---------------- */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#0d0d0d] border-r border-gray-800/50 flex-col justify-center p-12 lg:p-20 overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gray-50 dark:bg-[#0d0d0d] border-r border-gray-200 dark:border-gray-800/50 flex-col justify-center p-12 lg:p-20 overflow-hidden transition-colors duration-300">
         <motion.div animate={{ y: [0, -40, 0], scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-green/20 rounded-full blur-[150px] pointer-events-none" />
         <motion.div animate={{ x: [0, -30, 0], y: [0, 40, 0], scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -84,7 +84,7 @@ export default function AuthPage() {
                 Administration.
               </span>
             </motion.h1>
-            <motion.p variants={itemVariants} className="text-gray-400 text-lg font-light mb-10">
+            <motion.p variants={itemVariants} className="text-gray-500 dark:text-gray-400 text-lg font-light mb-10 transition-colors duration-300">
               Access the centralized control panel to manage users and monitor operations.
             </motion.p>
             
@@ -94,25 +94,25 @@ export default function AuthPage() {
                 { icon: Zap, text: "Lightning fast performance" },
                 { icon: LayoutDashboard, text: "Intuitive dashboard" }
               ].map((feature, idx) => (
-                <motion.div key={idx} variants={itemVariants} className="flex items-center gap-4 text-gray-300 group cursor-default">
-                  <div className="relative p-3 bg-brand-green/10 rounded-xl text-brand-green group-hover:bg-brand-green group-hover:text-black transition-all duration-300">
+                <motion.div key={idx} variants={itemVariants} className="flex items-center gap-4 text-gray-600 dark:text-gray-300 group cursor-default transition-colors duration-300">
+                  <div className="relative p-3 bg-brand-green/10 rounded-xl text-brand-green group-hover:bg-brand-green group-hover:text-white transition-all duration-300">
                     <feature.icon size={22} />
                     <motion.div className="absolute inset-0 border border-brand-green rounded-xl" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 3, repeat: Infinity, delay: idx * 0.5 }} />
                   </div>
-                  <span className="text-md font-medium group-hover:text-white transition-colors">{feature.text}</span>
+                  <span className="text-md font-medium group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">{feature.text}</span>
                 </motion.div>
               ))}
             </div>
           </motion.div>
         </div>
         
-        <div className="absolute bottom-8 left-12 lg:left-20 z-10 text-sm text-gray-600 font-medium">
+        <div className="absolute bottom-8 left-12 lg:left-20 z-10 text-sm text-gray-400 dark:text-gray-600 font-medium transition-colors duration-300">
           © {new Date().getFullYear()} My Buddy Worker.
         </div>
       </div>
 
       {/* ---------------- RIGHT SIDE: Forms Area ---------------- */}
-      <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-24 relative bg-black/40 backdrop-blur-xl">
+      <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-24 relative bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-colors duration-300">
         
         <motion.div className="absolute top-8 left-8 lg:hidden" animate={{ y: [-4, 4, -4] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
           <img src={logo} alt="Logo" className="h-20 object-contain" />
@@ -144,27 +144,27 @@ export default function AuthPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="mb-8">
-                    <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight">Secure Login</h2>
-                    <p className="text-gray-400 text-sm md:text-base">Enter your administrative credentials to continue.</p>
+                    <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Secure Login</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base transition-colors duration-300">Enter your administrative credentials to continue.</p>
                   </div>
 
                   <form className="space-y-5" onSubmit={handleLoginSubmit}>
                     <div className="group relative">
-                      <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input type="email" placeholder="admin@mybuddyworker.com" required className="w-full bg-gray-900/60 text-white border border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-600 shadow-inner" />
+                      <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
+                      <input type="email" placeholder="admin@mybuddyworker.com" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
                     </div>
 
                     <div className="group relative">
-                      <Lock className="absolute left-4 top-4 h-5 w-5 text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input type="password" placeholder="••••••••" required className="w-full bg-gray-900/60 text-white border border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-600 shadow-inner" />
+                      <Lock className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
+                      <input type="password" placeholder="••••••••" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300">
-                        <input type="checkbox" className="accent-brand-green rounded border-gray-800 bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer" />
+                      <label className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300 transition-colors duration-300">
+                        <input type="checkbox" className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300" />
                         Remember me
                       </label>
-                      <a href="#" className="text-sm font-medium text-brand-green hover:text-emerald-400 transition-colors">Forgot password?</a>
+                      <a href="#" className="text-sm font-medium text-brand-green hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">Forgot password?</a>
                     </div>
 
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
@@ -191,9 +191,9 @@ export default function AuthPage() {
                     <div className="w-12 h-12 bg-brand-green/10 border border-brand-green/20 rounded-2xl flex items-center justify-center mb-6 text-brand-green">
                       <Smartphone size={24} />
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight">Two-Step Verification</h2>
-                    <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-                      We've sent a 6-digit verification code to your registered mobile device ending in <strong className="text-white">**78</strong>.
+                    <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Two-Step Verification</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base leading-relaxed transition-colors duration-300">
+                      We've sent a 6-digit verification code to your registered mobile device ending in <strong className="text-gray-900 dark:text-white">**78</strong>.
                     </p>
                   </div>
 
@@ -211,7 +211,7 @@ export default function AuthPage() {
                           value={digit}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                          className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-gray-900/60 text-white border border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner"
+                          className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner"
                         />
                       ))}
                     </div>
@@ -225,7 +225,7 @@ export default function AuthPage() {
                         </span>
                       </motion.button>
                       
-                      <button type="button" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2">
+                      <button type="button" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-2">
                         <RefreshCw size={14} /> Didn't receive the code? Resend
                       </button>
                     </div>

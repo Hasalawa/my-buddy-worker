@@ -40,28 +40,28 @@ export default function Admins() {
   return (
     <div className="w-full relative overflow-x-clip pb-10">
       {/* Background Glows */}
-      <div className="absolute top-[10%] right-[-5%] w-[400px] h-[400px] bg-brand-green/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute top-[10%] right-[-5%] w-[400px] h-[400px] bg-brand-green/10 dark:bg-brand-green/5 rounded-full blur-[120px] pointer-events-none -z-10 transition-colors duration-300" />
 
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-7xl mx-auto w-full space-y-8">
         
         {/* Header Section */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3 transition-colors duration-300">
               Administrator Management
             </h1>
-            <p className="text-gray-400 mt-1 text-sm">View, edit, and manage staff access across the platform.</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm transition-colors duration-300">View, edit, and manage staff access across the platform.</p>
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-gray-900/50 border border-gray-800 rounded-xl px-4 py-2.5 flex-1 sm:flex-none focus-within:border-brand-green transition-colors">
-              <Search size={18} className="text-gray-500" />
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 flex-1 sm:flex-none focus-within:border-brand-green transition-colors duration-300">
+              <Search size={18} className="text-gray-400 dark:text-gray-500" />
               <input 
                 type="text" 
                 placeholder="Search staff..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-sm w-full sm:w-48 placeholder:text-gray-600 text-white" 
+                className="bg-transparent border-none outline-none text-sm w-full sm:w-48 placeholder:text-gray-400 dark:placeholder:text-gray-600 text-gray-900 dark:text-white" 
               />
             </div>
             {/* අලුත් Admin කෙනෙක් හදන පිටුවට යන බොත්තම */}
@@ -76,17 +76,17 @@ export default function Admins() {
         </motion.div>
 
         {/* Filters */}
-        <motion.div variants={itemVariants} className="flex items-center gap-3 bg-[#111111]/80 border border-gray-800/80 p-2 rounded-2xl backdrop-blur-sm w-fit overflow-x-auto custom-scrollbar">
+        <motion.div variants={itemVariants} className="flex items-center gap-3 bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 p-2 rounded-2xl backdrop-blur-sm w-fit overflow-x-auto custom-scrollbar transition-colors duration-300">
           <FilterButton active={filter === 'All'} onClick={() => setFilter('All')} label="All Staff" />
           <FilterButton active={filter === 'Super Admin'} onClick={() => setFilter('Super Admin')} label="Super Admins" />
           <FilterButton active={filter === 'Moderator'} onClick={() => setFilter('Moderator')} label="Moderators" />
         </motion.div>
 
         {/* Admins Table */}
-        <motion.div variants={itemVariants} className="bg-[#111111]/80 border border-gray-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-xl min-h-[400px]">
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-xl min-h-[400px] transition-colors duration-300">
           <div className="overflow-x-auto custom-scrollbar pb-4">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="text-gray-400 border-b border-gray-800">
+              <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
                 <tr>
                   <th className="pb-4 font-medium px-4">Staff Member</th>
                   <th className="pb-4 font-medium px-4">Role & Access</th>
@@ -95,7 +95,7 @@ export default function Admins() {
                   <th className="pb-4 font-medium text-right px-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/50">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50 transition-colors duration-300">
                 <AnimatePresence>
                   {filteredAdmins.map((admin) => (
                     <motion.tr 
@@ -104,40 +104,44 @@ export default function Admins() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="hover:bg-gray-900/30 transition-colors group"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors group"
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
-                            admin.role === 'Super Admin' ? 'bg-brand-green/20 text-brand-green border border-brand-green/30' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 transition-colors duration-300 ${
+                            admin.role === 'Super Admin' 
+                              ? 'bg-brand-green/20 text-brand-green border border-brand-green/30' 
+                              : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
                           }`}>
                             {admin.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-semibold text-white group-hover:text-brand-green transition-colors">{admin.name}</p>
-                            <p className="text-xs text-gray-500 font-mono mt-0.5">{admin.email}</p>
+                            <p className="font-semibold text-gray-900 dark:text-white group-hover:text-brand-green transition-colors">{admin.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5 transition-colors duration-300">{admin.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex flex-col items-start gap-1.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                            admin.role === 'Super Admin' ? 'bg-brand-green/10 text-brand-green border-brand-green/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300 ${
+                            admin.role === 'Super Admin' 
+                              ? 'bg-brand-green/10 text-brand-green border-brand-green/20' 
+                              : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
                           }`}>
                             {admin.role === 'Super Admin' ? <ShieldCheck size={12} /> : <Shield size={12} />}
                             {admin.role}
                           </span>
                           <div className="flex gap-1 flex-wrap mt-1">
                             {admin.permissions.map(perm => (
-                              <span key={perm} className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">{perm}</span>
+                              <span key={perm} className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded transition-colors duration-300">{perm}</span>
                             ))}
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-                          admin.status === 'Active' ? 'text-emerald-400' : 
-                          admin.status === 'Offline' ? 'text-gray-400' : 'text-red-400'
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors duration-300 ${
+                          admin.status === 'Active' ? 'text-emerald-500 dark:text-emerald-400' : 
+                          admin.status === 'Offline' ? 'text-gray-500 dark:text-gray-400' : 'text-red-500 dark:text-red-400'
                         }`}>
                           {admin.status === 'Active' && <CheckCircle2 size={14} />}
                           {admin.status === 'Offline' && <Clock size={14} />}
@@ -145,15 +149,15 @@ export default function Admins() {
                           {admin.status}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-gray-500 text-xs">
+                      <td className="py-4 px-4 text-gray-500 dark:text-gray-400 text-xs transition-colors duration-300">
                         {admin.lastActive}
                       </td>
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="p-2 bg-gray-800 hover:bg-blue-500/20 text-gray-400 hover:text-blue-400 rounded-lg transition-colors tooltip-trigger" title="Edit Permissions">
+                          <button className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-500/20 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip-trigger" title="Edit Permissions">
                             <Edit size={16} />
                           </button>
-                          <button className="p-2 bg-gray-800 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg transition-colors tooltip-trigger" title={admin.status === 'Suspended' ? 'Delete Account' : 'Suspend Account'}>
+                          <button className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-500/20 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors tooltip-trigger" title={admin.status === 'Suspended' ? 'Delete Account' : 'Suspend Account'}>
                             {admin.status === 'Suspended' ? <Trash2 size={16} /> : <Ban size={16} />}
                           </button>
                         </div>
@@ -162,7 +166,7 @@ export default function Admins() {
                   ))}
                   {filteredAdmins.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-500">
+                      <td colSpan={5} className="py-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
                         No administrators found matching your criteria.
                       </td>
                     </tr>
@@ -185,8 +189,8 @@ function FilterButton({ active, onClick, label }: any) {
       onClick={onClick}
       className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
         active 
-          ? 'bg-gray-800 text-white shadow-md' 
-          : 'bg-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+          ? 'bg-gray-900 dark:bg-gray-800 text-white shadow-md' 
+          : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
       }`}
     >
       {label}

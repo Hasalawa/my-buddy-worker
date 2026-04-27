@@ -6,11 +6,11 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white overflow-hidden relative selection:bg-brand-green/30">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white overflow-hidden relative selection:bg-brand-green/30 transition-colors duration-300">
       
       {/* Background Ambient Glows */}
-      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-brand-green/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-brand-green/20 dark:bg-brand-green/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-300" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none transition-colors duration-300" />
 
       {/* Floating Particles for extra premium feel */}
       {[...Array(5)].map((_, i) => (
@@ -43,21 +43,21 @@ export default function NotFound() {
         <motion.div
           animate={{ y: [-10, 10, -10] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="mb-6 p-4 rounded-3xl bg-brand-green/10 border border-brand-green/20 text-brand-green shadow-[0_0_30px_rgba(0,204,68,0.15)]"
+          className="mb-6 p-4 rounded-3xl bg-brand-green/10 border border-brand-green/20 text-brand-green shadow-[0_0_30px_rgba(0,204,68,0.15)] transition-colors duration-300"
         >
           <AlertTriangle size={64} strokeWidth={1.5} />
         </motion.div>
 
         {/* 404 Text */}
-        <h1 className="text-8xl sm:text-9xl font-extrabold tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-800">
+        <h1 className="text-8xl sm:text-9xl font-extrabold tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400 dark:from-white dark:to-gray-800 transition-colors duration-300">
           404
         </h1>
         
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-white">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white transition-colors duration-300">
           System Route Not Found
         </h2>
         
-        <p className="text-gray-400 text-sm sm:text-base mb-10 leading-relaxed">
+        <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base mb-10 leading-relaxed transition-colors duration-300">
           The administrative module you are looking for does not exist, has been restricted, or temporarily moved. Let's get you back on track.
         </p>
 
@@ -67,7 +67,7 @@ export default function NotFound() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate(-1)} // කලින් හිටපු පිටුවට යනවා
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors font-medium text-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-300 font-medium text-sm"
           >
             <ArrowLeft size={18} />
             Go Back
@@ -77,7 +77,7 @@ export default function NotFound() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/dashboard')} // Dashboard එකට යනවා
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-brand-green text-black font-bold shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)] transition-all text-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-brand-green text-black font-bold shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)] transition-all duration-300 text-sm"
           >
             <LayoutDashboard size={18} />
             Return to Dashboard

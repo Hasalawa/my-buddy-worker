@@ -55,7 +55,6 @@ export default function Dashboard() {
   const [revenueFilter, setRevenueFilter] = useState("This Week");
 
   return (
-    
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -64,10 +63,10 @@ export default function Dashboard() {
           >
             {/* Page Title */}
             <motion.div variants={itemVariants}>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white transition-colors duration-300">
                 System Overview
               </h1>
-              <p className="text-gray-400 mt-1">
+              <p className="text-gray-500 dark:text-gray-400 mt-1 transition-colors duration-300">
                 Real-time metrics for My Buddy Worker platform.
               </p>
             </motion.div>
@@ -107,10 +106,10 @@ export default function Dashboard() {
               {/* Main Area Chart */}
               <motion.div
                 variants={itemVariants}
-                className="lg:col-span-2 bg-[#111111]/80 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl"
+                className="lg:col-span-2 bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl transition-colors duration-300"
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold">Revenue & Activity</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">Revenue & Activity</h3>
 
                   <CustomDropdown
                     options={["This Week", "Last Month", "This Year"]}
@@ -187,9 +186,9 @@ export default function Dashboard() {
               {/* Secondary Bar Chart */}
               <motion.div
                 variants={itemVariants}
-                className="bg-[#111111]/80 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl"
+                className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl transition-colors duration-300"
               >
-                <h3 className="text-lg font-semibold mb-6">Jobs by Category</h3>
+                <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white transition-colors duration-300">Jobs by Category</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -218,6 +217,7 @@ export default function Dashboard() {
                           backgroundColor: "#111",
                           borderColor: "#333",
                           borderRadius: "8px",
+                          color: "#fff",
                         }}
                       />
                       <Bar
@@ -235,17 +235,17 @@ export default function Dashboard() {
             {/* Recent Activity Table */}
             <motion.div
               variants={itemVariants}
-              className="bg-[#111111]/80 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl overflow-hidden"
+              className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm shadow-xl overflow-hidden transition-colors duration-300"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold">Recent Job Postings</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">Recent Job Postings</h3>
                 <button className="text-sm text-brand-green hover:underline">
                   View All
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="text-gray-400 border-b border-gray-800">
+                  <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
                     <tr>
                       <th className="pb-3 font-medium">Job Title</th>
                       <th className="pb-3 font-medium">Buyer</th>
@@ -254,7 +254,7 @@ export default function Dashboard() {
                       <th className="pb-3 font-medium">Time</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800/50">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50 transition-colors duration-300">
                     <TableRow
                       title="UI/UX Design for Mobile App"
                       buyer="Sylvestra Tech"
@@ -303,25 +303,25 @@ function StatCard({
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-[#111111]/80 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden group hover:border-brand-green/30 transition-colors"
+      className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden group hover:border-brand-green/30 dark:hover:border-brand-green/30 transition-colors duration-300"
     >
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-gray-900 dark:text-white">
         <Icon size={80} />
       </div>
       <div className="flex justify-between items-start mb-4 relative z-10">
-        <div className="p-3 bg-gray-900 rounded-xl text-brand-green border border-gray-800">
+        <div className="p-3 bg-gray-100 dark:bg-gray-900 rounded-xl text-brand-green border border-gray-200 dark:border-gray-800 transition-colors duration-300">
           <Icon size={24} />
         </div>
         <span
-          className={`text-xs font-bold px-2.5 py-1 rounded-full ${negative ? "bg-red-500/10 text-red-400" : "bg-brand-green/10 text-brand-green"}`}
+          className={`text-xs font-bold px-2.5 py-1 rounded-full transition-colors duration-300 ${negative ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400" : "bg-brand-green/10 text-brand-green"}`}
         >
           {trend}
         </span>
       </div>
       <div className="relative z-10">
-        <h4 className="text-gray-400 text-sm font-medium mb-1">{title}</h4>
+        <h4 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 transition-colors duration-300">{title}</h4>
         <div
-          className={`text-3xl font-bold tracking-tight ${isCurrency ? "text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400" : "text-white"}`}
+          className={`text-3xl font-bold tracking-tight transition-colors duration-300 ${isCurrency ? "text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400" : "text-gray-900 dark:text-white"}`}
         >
           {value}
         </div>
@@ -332,20 +332,20 @@ function StatCard({
 
 function TableRow({ title, buyer, amount, status, time }: any) {
   return (
-    <tr className="hover:bg-gray-900/30 transition-colors group">
-      <td className="py-4 font-medium text-white group-hover:text-brand-green transition-colors">
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors group">
+      <td className="py-4 font-medium text-gray-900 dark:text-white group-hover:text-brand-green transition-colors duration-300">
         {title}
       </td>
-      <td className="py-4 text-gray-400">{buyer}</td>
-      <td className="py-4 font-semibold">{amount}</td>
+      <td className="py-4 text-gray-600 dark:text-gray-400 transition-colors duration-300">{buyer}</td>
+      <td className="py-4 font-semibold text-gray-900 dark:text-white transition-colors duration-300">{amount}</td>
       <td className="py-4">
         <span
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors duration-300 ${
             status === "Active"
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+              ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
               : status === "Completed"
-                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                : "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20"
+                : "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20"
           }`}
         >
           {status === "Active" && <Activity size={12} />}
@@ -354,7 +354,7 @@ function TableRow({ title, buyer, amount, status, time }: any) {
           {status}
         </span>
       </td>
-      <td className="py-4 text-gray-500">{time}</td>
+      <td className="py-4 text-gray-500 dark:text-gray-400 transition-colors duration-300">{time}</td>
     </tr>
   );
 }
@@ -382,7 +382,7 @@ function CustomDropdown({ options, value, onChange }: any) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-gray-900 border border-gray-800 text-sm rounded-lg px-3 py-1.5 outline-none focus:border-brand-green hover:border-gray-700 transition-colors text-white"
+        className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm rounded-lg px-3 py-1.5 outline-none focus:border-brand-green hover:border-gray-300 dark:hover:border-gray-700 transition-colors duration-300 text-gray-900 dark:text-white"
       >
         {value}
         
@@ -395,7 +395,7 @@ function CustomDropdown({ options, value, onChange }: any) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-36 bg-[#111111] border border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-md"
+            className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-md transition-colors duration-300"
           >
             {options.map((option: string) => (
               <div
@@ -404,10 +404,10 @@ function CustomDropdown({ options, value, onChange }: any) {
                   onChange(option);
                   setIsOpen(false);
                 }}
-                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-300 ${
                   value === option
-                    ? "bg-brand-green/20 text-brand-green font-medium"
-                    : "text-gray-300 hover:bg-brand-green hover:text-black font-medium"
+                    ? "bg-brand-green/10 dark:bg-brand-green/20 text-brand-green font-medium"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-brand-green hover:text-black font-medium"
                 }`}
               >
                 {option}
