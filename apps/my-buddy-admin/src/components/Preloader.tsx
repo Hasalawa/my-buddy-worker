@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import logo from '../assets/images/logo.png';
+import logo from '../assets/images/logo.png'; 
+import logoLight from '../assets/images/logo_lightMode.png';
 
 export default function Preloader() {
   return (
@@ -13,7 +14,14 @@ export default function Preloader() {
       <motion.img
         src={logo}
         alt="Loading..."
-        className="h-28 object-contain mb-10 relative z-10"
+        className="hidden dark:block h-28 object-contain mb-10 relative z-10"
+        animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.img
+        src={logoLight}
+        alt="Loading..."
+        className=" block dark:hidden h-28 object-contain mb-10 relative z-10"
         animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
