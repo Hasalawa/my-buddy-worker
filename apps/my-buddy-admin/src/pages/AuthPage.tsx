@@ -3,6 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
 import logo from '../assets/images/logo.png'; 
+import logoLight from '../assets/images/logo_lightMode.png';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -73,8 +74,11 @@ export default function AuthPage() {
         ))}
         
         <div className="relative z-10 w-full max-w-lg mx-auto flex flex-col items-start gap-10">
+          
+          {/* Desktop ලෝගෝ මාරුව */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, type: "spring" }}>
-            <motion.img src={logo} alt="My Buddy Worker" className="h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
+            <motion.img src={logo} alt="My Buddy Worker" className="hidden dark:block h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
+            <motion.img src={logoLight} alt="My Buddy Worker" className="block dark:hidden h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
           </motion.div>
 
           <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full">
@@ -114,8 +118,10 @@ export default function AuthPage() {
       {/* ---------------- RIGHT SIDE: Forms Area ---------------- */}
       <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-24 relative bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-colors duration-300">
         
+        {/* Mobile ලෝගෝ මාරුව */}
         <motion.div className="absolute top-8 left-8 lg:hidden" animate={{ y: [-4, 4, -4] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
-          <img src={logo} alt="Logo" className="h-20 object-contain" />
+          <img src={logo} alt="Logo" className="hidden dark:block h-20 object-contain" />
+          <img src={logoLight} alt="Logo" className="block dark:hidden h-20 object-contain" />
         </motion.div>
 
         <motion.div className="w-full max-w-md relative">
