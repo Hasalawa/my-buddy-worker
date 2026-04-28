@@ -6,6 +6,7 @@ import {
   FileText, MessageSquareWarning
 } from "lucide-react";
 import logo from "../assets/images/logo.png";
+import logoLight from '../assets/images/logo_lightMode.png';
 
 export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
   const location = useLocation();
@@ -47,7 +48,8 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
       className="h-full bg-white dark:bg-[#111111] border-r border-gray-200 dark:border-gray-800/50 flex flex-col z-20 relative overflow-hidden shrink-0 transition-colors duration-300"
     >
       <div className="p-6 flex items-center gap-4 min-w-[280px]">
-        <img src={logo} alt="My Buddy Worker" className="h-10 object-contain drop-shadow-lg" />
+        <img src={logo} alt="My Buddy Worker" className="hidden dark:block h-10 object-contain drop-shadow-lg" />
+        <img src={logoLight} alt="My Buddy Worker" className="block dark:hidden h-10 object-contain drop-shadow-lg" />
         <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white transition-colors duration-300">
           Admin<span className="text-brand-green">Portal</span>
         </span>
