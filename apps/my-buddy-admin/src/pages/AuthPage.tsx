@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
 import logo from '../assets/images/logo.png'; 
 import logoLight from '../assets/images/logo_lightMode.png';
@@ -21,6 +21,23 @@ const itemVariants: Variants = {
 export default function AuthPage() {
   const navigate = useNavigate();
   
+  // --- Theme Management Logic ---
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+  // ------------------------------
+
   // 1. Step එක Control කරන්න State එකක් (step 1 = Login, step 2 = 2FA)
   const [step, setStep] = useState<1 | 2>(1);
   
@@ -62,9 +79,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300">
+    <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300 relative">
       
-      {/* ---------------- LEFT SIDE: Branding & Visuals (කලින් විදියටමයි) ---------------- */}
+      {/* --- Theme Toggle Button --- */}
+      <button 
+        onClick={toggleTheme} 
+        className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 p-3 rounded-full bg-white/50 dark:bg-black/50 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-brand-green dark:hover:text-brand-green transition-colors backdrop-blur-md shadow-sm"
+      >
+        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
+      {/* ---------------- LEFT SIDE: Branding & Visuals ---------------- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gray-50 dark:bg-[#0d0d0d] border-r border-gray-200 dark:border-gray-800/50 flex-col justify-center p-12 lg:p-20 overflow-hidden transition-colors duration-300">
         <motion.div animate={{ y: [0, -40, 0], scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-green/20 rounded-full blur-[150px] pointer-events-none" />
         <motion.div animate={{ x: [0, -30, 0], y: [0, 40, 0], scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
