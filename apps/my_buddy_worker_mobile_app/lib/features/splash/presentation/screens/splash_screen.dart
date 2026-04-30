@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../features/auth/presentation/screens/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,9 +38,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigate to next screen after 3 seconds
     Timer(const Duration(seconds: 3), () {
-      // දැනට මේක print එකක් විතරයි. ඉස්සරහට මෙතනින් Login/Home එකට යවමු.
-      // Navigator.pushReplacementNamed(context, '/login');
-      debugPrint("Navigate to Next Screen");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
     });
   }
 
