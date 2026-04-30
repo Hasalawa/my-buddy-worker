@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { 
   DollarSign, ArrowUpRight, CreditCard, Download, 
-  Wallet, CheckCircle, Clock, AlertCircle, Building 
+  Wallet, CheckCircle, Clock, AlertCircle, Building,
+  Heart, Server, ArrowRightLeft
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -33,6 +34,13 @@ const pendingPayouts = [
   { id: 'TRX-9082', student: 'Nethmi Silva', bank: 'BOC - 8273****', amount: 'Rs 12,500', status: 'Pending', days: '2 days waiting' },
   { id: 'TRX-9083', student: 'Kamal Perera', bank: 'ComBank - 1928****', amount: 'Rs 4,000', status: 'Pending', days: '1 day waiting' },
   { id: 'TRX-9084', student: 'Kasun Kalhara', bank: 'HNB - 9921****', amount: 'Rs 8,500', status: 'Processing', days: 'Just now' },
+];
+
+// අලුතින් එකතු කරපු Transaction Data
+const recentTransactions = [
+  { id: 'PAY-5011', payer: 'Sylvestra Tech', payee: 'Nethmi Silva', amount: 'Rs 15,000', date: 'Apr 30, 2026', time: '10:45 AM', status: 'Completed' },
+  { id: 'PAY-5012', payer: 'Perera Stores', payee: 'Kamal Perera', amount: 'Rs 3,000', date: 'Apr 29, 2026', time: '02:30 PM', status: 'Completed' },
+  { id: 'PAY-5013', payer: 'Global Reach', payee: 'Kasun Kalhara', amount: 'Rs 8,500', date: 'Apr 29, 2026', time: '09:15 AM', status: 'Processing' },
 ];
 
 export default function Finance() {
@@ -71,20 +79,20 @@ export default function Finance() {
         </motion.div>
 
         {/* Top Financial KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           <FinanceCard 
-            title="Total Transaction Volume" 
-            amount="Rs 200,000" 
+            title="Total Transaction" 
+            amount="Rs 200k" 
             trend="+15.3%" 
-            subtitle="Money moved through the app"
+            subtitle="Volume moved"
             icon={ArrowUpRight} 
             colorClass="text-gray-900 dark:text-white"
           />
           <FinanceCard 
-            title="App Commission Earned" 
+            title="App Commission" 
             amount="Rs 20,000" 
             trend="+12.1%" 
-            subtitle="Platform revenue (10% fee)"
+            subtitle="Platform revenue"
             icon={DollarSign} 
             colorClass="text-brand-green"
             highlight
@@ -93,9 +101,26 @@ export default function Finance() {
             title="Pending Payouts" 
             amount="Rs 45,500" 
             trend="-2.4%" 
-            subtitle="Needs to be cleared to workers"
+            subtitle="To be cleared"
             icon={Wallet} 
             colorClass="text-orange-500 dark:text-orange-400"
+          />
+          {/* අලුතින් එකතු කරපු KPI Cards */}
+          <FinanceCard 
+            title="Charity Fund" 
+            amount="Rs 5,000" 
+            trend="+5.0%" 
+            subtitle="Allocated donations"
+            icon={Heart} 
+            colorClass="text-rose-500 dark:text-rose-400"
+          />
+          <FinanceCard 
+            title="Maintenance" 
+            amount="Rs 8,000" 
+            trend="+3.2%" 
+            subtitle="Server & operations"
+            icon={Server} 
+            colorClass="text-blue-500 dark:text-blue-400"
           />
         </div>
 
@@ -202,6 +227,70 @@ export default function Finance() {
           </div>
         </motion.div>
 
+        {/* අලුතින් එකතු කරපු Transaction History Table */}
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-xl overflow-hidden transition-colors duration-300">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
+                <ArrowRightLeft className="text-brand-green" size={20} />
+                Recent Transactions
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 transition-colors duration-300">Track who paid whom, including date and time details.</p>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto custom-scrollbar pb-2">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+                <tr>
+                  <th className="pb-3 font-medium px-4">Transaction ID</th>
+                  <th className="pb-3 font-medium px-4">Payment Flow (Payer → Payee)</th>
+                  <th className="pb-3 font-medium px-4">Date & Time</th>
+                  <th className="pb-3 font-medium px-4">Amount</th>
+                  <th className="pb-3 font-medium px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50 transition-colors duration-300">
+                {recentTransactions.map(txn => (
+                  <tr key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors group">
+                    <td className="py-4 px-4 font-mono text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                      {txn.id}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-300">{txn.payer}</span>
+                        <ArrowRightLeft size={14} className="text-brand-green opacity-50" />
+                        <span className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">{txn.payee}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span className="text-gray-900 dark:text-white transition-colors duration-300">{txn.date}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1 transition-colors duration-300">
+                          <Clock size={10} /> {txn.time}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                      {txn.amount}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300 ${
+                        txn.status === 'Completed' 
+                          ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' 
+                          : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                      }`}>
+                        {txn.status === 'Completed' ? <CheckCircle size={10} /> : <Clock size={10} />}
+                        {txn.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
       </motion.div>
     </div>
   );
@@ -212,31 +301,31 @@ function FinanceCard({ title, amount, trend, subtitle, icon: Icon, colorClass, h
   return (
     <motion.div 
       variants={itemVariants} 
-      className={`relative overflow-hidden rounded-2xl p-6 border backdrop-blur-sm transition-colors duration-300 group ${
+      className={`relative overflow-hidden rounded-2xl p-5 border backdrop-blur-sm transition-colors duration-300 group ${
         highlight 
           ? 'bg-brand-green/5 border-brand-green/30 hover:border-brand-green/60 dark:hover:border-brand-green/60' 
           : 'bg-white/80 dark:bg-[#111111]/80 border-gray-200 dark:border-gray-800/80 hover:border-gray-300 dark:hover:border-gray-700'
       }`}
     >
       <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity text-gray-900 dark:text-white">
-        <Icon size={100} />
+        <Icon size={80} />
       </div>
       
-      <div className="relative z-10 flex justify-between items-start mb-6">
-        <div className={`p-3 rounded-xl border transition-colors duration-300 ${highlight ? 'bg-brand-green/20 border-brand-green/30 text-brand-green' : 'bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400'}`}>
-          <Icon size={22} />
+      <div className="relative z-10 flex justify-between items-start mb-4">
+        <div className={`p-2.5 rounded-xl border transition-colors duration-300 ${highlight ? 'bg-brand-green/20 border-brand-green/30 text-brand-green' : 'bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400'}`}>
+          <Icon size={20} />
         </div>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full transition-colors duration-300 ${trend.startsWith('+') ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full transition-colors duration-300 ${trend.startsWith('+') ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
           {trend}
         </span>
       </div>
       
       <div className="relative z-10">
-        <h4 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 transition-colors duration-300">{title}</h4>
-        <div className={`text-3xl sm:text-4xl font-extrabold tracking-tight mb-1 transition-colors duration-300 ${colorClass}`}>
+        <h4 className="text-gray-500 dark:text-gray-400 text-[11px] font-medium mb-1 transition-colors duration-300">{title}</h4>
+        <div className={`text-2xl font-extrabold tracking-tight mb-1 transition-colors duration-300 ${colorClass}`}>
           {amount}
         </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-300">{subtitle}</p>
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 transition-colors duration-300">{subtitle}</p>
       </div>
     </motion.div>
   );
