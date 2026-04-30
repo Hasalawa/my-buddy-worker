@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
 
 void main() {
-  runApp(const MainApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  // Firebase initialization එක ඉස්සරහට මෙතනට එනවා
+  // await Firebase.initializeApp();
+  
+  runApp(const MyBuddyWorkerApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyBuddyWorkerApp extends StatelessWidget {
+  const MyBuddyWorkerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp(
+      title: 'My Buddy Worker',
+      debugShowCheckedModeBanner: false,
+      
+      // Theme Management
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system, // ෆෝන් එකේ System Theme එකට Auto හැඩගැහෙනවා
+      
+      home: const SplashScreen(),
     );
   }
 }
