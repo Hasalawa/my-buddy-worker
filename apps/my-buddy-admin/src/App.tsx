@@ -13,6 +13,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Admins from "./pages/Admins";
+import AppComplaints from "./pages/Complaints";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/admins" element={<Admins />} />
+          <Route path="/app-complaints" element={<AppComplaints />} />
           {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
           <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>

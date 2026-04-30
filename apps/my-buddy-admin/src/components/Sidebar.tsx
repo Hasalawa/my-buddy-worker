@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Users, Briefcase, DollarSign, Activity, LayoutDashboard, 
   Settings, LogOut, UserPlus, ShieldAlert, 
-  FileText, MessageSquareWarning
+  FileText, MessageSquareWarning,
+  Smartphone
 } from "lucide-react";
 import logo from "../assets/images/logo.png";
 import logoLight from '../assets/images/logo_lightMode.png';
@@ -68,6 +69,7 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
         <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-6 transition-colors duration-300">Moderation</p>
         <NavItem icon={MessageSquareWarning} label="Disputes & Support" path="/support" badge="3" />
         <NavItem icon={ShieldAlert} label="Flagged Content" path="/flagged" />
+        <NavItem icon={Smartphone} label="App Complaints" path="/app-complaints" />
 
         <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-6 transition-colors duration-300">System</p>
         <NavItem icon={UserPlus} label="Administrators" path="/admins" />
