@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion, type Variants } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, type Variants, AnimatePresence } from 'framer-motion';
 import { 
   DollarSign, ArrowUpRight, CreditCard, Download, 
   Wallet, CheckCircle, Clock, AlertCircle, Building,
@@ -62,16 +62,17 @@ export default function Finance() {
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <select 
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-brand-green flex-1 sm:flex-none cursor-pointer transition-colors duration-300"
-            >
-              <option>This Week</option>
-              <option>This Month</option>
-              <option>This Year</option>
-            </select>
-            <button className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-white px-4 py-2.5 rounded-xl transition-colors duration-300 text-sm font-medium border border-gray-200 dark:border-gray-700">
+            
+            {/* Custom Dropdown Replaced Here */}
+            <div className="flex-1 sm:flex-none z-20">
+              <CustomDropdown 
+                options={['This Week', 'This Month', 'This Year']}
+                value={dateRange}
+                onChange={setDateRange}
+              />
+            </div>
+
+            <button className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-white px-4 py-2.5 rounded-xl transition-colors duration-300 text-sm font-medium border border-gray-200 dark:border-gray-700 shrink-0">
               <Download size={16} />
               <span className="hidden sm:inline">Export Report</span>
             </button>
@@ -328,5 +329,62 @@ function FinanceCard({ title, amount, trend, subtitle, icon: Icon, colorClass, h
         <p className="text-[10px] text-gray-400 dark:text-gray-500 transition-colors duration-300">{subtitle}</p>
       </div>
     </motion.div>
+  );
+}
+
+// --- Custom Premium Dropdown ---
+function CustomDropdown({ options, value, onChange }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close (Senior UX practice)
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full sm:w-36 gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-brand-green hover:border-gray-300 dark:hover:border-gray-700 transition-colors duration-300 text-gray-700 dark:text-gray-300"
+      >
+        {value}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 mt-2 w-full sm:w-36 bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 backdrop-blur-md transition-colors duration-300"
+          >
+            {options.map((option: string) => (
+              <div
+                key={option}
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors duration-300 ${
+                  value === option
+                    ? "bg-brand-green/10 dark:bg-brand-green/20 text-brand-green font-medium"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-brand-green hover:text-black font-medium"
+                }`}
+              >
+                {option}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
