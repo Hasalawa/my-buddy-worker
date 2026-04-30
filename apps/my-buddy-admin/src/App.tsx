@@ -36,8 +36,6 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/admins" element={<Admins />} />
           <Route path="/app-complaints" element={<AppComplaints />} />
-          {/* ඉස්සරහට හදන pages මෙතනට දාන්න */}
-          <Route path="/students" element={<div className="text-white">Students Page Coming Soon...</div>} />
         </Route>
 
         {/* වැරදි ලින්ක් එකකට ගියොත් Dashboard එකට යවන්න */}
