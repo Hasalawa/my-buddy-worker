@@ -187,11 +187,10 @@ function PermissionToggle({ label, active, onClick }: any) {
   return (
     <div className="flex items-center justify-between group cursor-pointer" onClick={onClick}>
       <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white transition-colors duration-300">{label}</span>
-      <div className={`w-10 h-5 sm:w-11 sm:h-6 rounded-full relative transition-colors duration-300 shrink-0 ${active ? 'bg-brand-green' : 'bg-gray-200 dark:bg-gray-800'}`}>
+      <div className={`flex items-center w-10 h-5 sm:w-11 sm:h-6 rounded-full px-1 transition-colors duration-300 shrink-0 ${active ? 'bg-brand-green justify-end' : 'bg-gray-200 dark:bg-gray-800 justify-start'}`}>
         <motion.div 
           layout
-          className="absolute top-1 bottom-1 w-3 sm:w-4 bg-white rounded-full shadow-sm"
-          animate={{ left: active ? 'calc(100% - 0.75rem - 4px)' : '0.25rem' }}
+          className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full shadow-sm"
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
       </div>
