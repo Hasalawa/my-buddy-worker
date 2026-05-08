@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw, Sun, Moon } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw, Sun, Moon, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
 import logo from '../assets/images/logo.png'; 
 import logoLight from '../assets/images/logo_lightMode.png';
@@ -39,8 +39,8 @@ export default function AuthPage() {
   };
   // ------------------------------
 
-  // 1. Step එක Control කරන්න State එකක් (step 1 = Login, step 2 = 2FA)
-  const [step, setStep] = useState<1 | 2>(1);
+  // 1. Step එක Control කරන්න State එකක් (step 1 = Login, step 2 = 2FA, step 3 = Forgot Password)
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   
   // 2FA OTP Boxes Control
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -57,6 +57,15 @@ export default function AuthPage() {
   const handle2FASubmit = (e: React.FormEvent) => {
     e.preventDefault();
     navigate('/dashboard');
+  };
+
+  // Forgot Password Form එක Submit කරාම
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendDiscordLog("🟡 Admin කෙනෙක් Password Reset Link එකක් Request කළා!");
+    // මෙතනින් Firebase Password Reset Logic එක ඉස්සරහට ලියන්න පුළුවන්
+    alert("If this email is registered, a password reset link will be sent.");
+    setStep(1); // ආයෙත් Login එකට යනවා
   };
 
   // OTP අංක ගහද්දි ඊළඟ කොටුවට Auto-Focus වෙන Logic එක
@@ -160,11 +169,11 @@ export default function AuthPage() {
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.4 }} className="mb-8">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-green/10 border border-brand-green/20 text-brand-green text-xs font-semibold tracking-wide uppercase shadow-[0_0_15px_rgba(0,204,68,0.15)]">
                 <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
-                {step === 1 ? 'Admin Portal' : 'Security Check'}
+                {step === 1 ? 'Admin Portal' : step === 2 ? 'Security Check' : 'Account Recovery'}
               </div>
             </motion.div>
 
-            {/* AnimatePresence එකෙන් Forms දෙක මාරු කරද්දි Slide වෙන Animation එකක් දෙනවා */}
+            {/* AnimatePresence එකෙන් Forms මාරු කරද්දි Slide වෙන Animation එකක් දෙනවා */}
             <AnimatePresence mode="wait">
               
               {/* ================= STEP 1: LOGIN FORM ================= */}
@@ -197,7 +206,9 @@ export default function AuthPage() {
                         <input type="checkbox" className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300" />
                         Remember me
                       </label>
-                      <a href="#" className="text-sm font-medium text-brand-green hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">Forgot password?</a>
+                      <button type="button" onClick={() => setStep(3)} className="text-sm font-medium text-brand-green hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
+                        Forgot password?
+                      </button>
                     </div>
 
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
@@ -262,6 +273,44 @@ export default function AuthPage() {
                         <RefreshCw size={14} /> Didn't receive the code? Resend
                       </button>
                     </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ================= STEP 3: FORGOT PASSWORD FORM ================= */}
+              {step === 3 && (
+                <motion.div 
+                  key="forgot-password-form"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="mb-8">
+                    <button 
+                      type="button" 
+                      onClick={() => setStep(1)} 
+                      className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-green transition-colors"
+                    >
+                      <ArrowLeft size={16} /> Back to Login
+                    </button>
+                    <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Reset Password</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base transition-colors duration-300">Enter your email address and we'll send you a link to reset your password.</p>
+                  </div>
+
+                  <form className="space-y-5" onSubmit={handleForgotPasswordSubmit}>
+                    <div className="group relative">
+                      <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
+                      <input type="email" placeholder="admin@mybuddyworker.com" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
+                    </div>
+
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
+                      <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                      <span className="relative flex items-center justify-center gap-2 text-lg">
+                        Send Reset Link
+                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </motion.button>
                   </form>
                 </motion.div>
               )}
