@@ -4,6 +4,7 @@ import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, 
 import { useNavigate } from 'react-router-dom'; 
 import logo from '../assets/images/logo.png'; 
 import logoLight from '../assets/images/logo_lightMode.png';
+import { sendDiscordLog } from '../utils/discord';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -46,8 +47,9 @@ export default function AuthPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Form Submit කරාම 2FA එකට යනවා
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
+    await sendDiscordLog("🟢 අලුත් Admin කෙනෙක් System එකට සාර්ථකව Login වුණා! \n**Email:** admin@mybuddyworker.com");
     setStep(2); 
   };
 
