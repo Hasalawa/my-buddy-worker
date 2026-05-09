@@ -70,7 +70,7 @@ export default function AuthPage() {
     if (step === 2) {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
-      }, 300);
+      }, 500); // Animation එකට යන වෙලාව නිසා 300 වෙනුවට 500ක් දුන්නා
     }
   }, [step]);
 
@@ -101,13 +101,23 @@ export default function AuthPage() {
       await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
       showToast("Authentication successful! Sending SMS OTP...", "success");
 
-      // 2. Invisible ReCaptcha එක සෙට් කරනවා SMS යවන්න කලින්
-      if (!(window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-        });
+      // ========================================================
+      // 2. පරණ Recaptcha එකක් තියෙනවා නම් ඒක සම්පූර්ණයෙන්ම අයින් කරනවා
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = null;
+        } catch (error) {
+          console.error("Recaptcha clear error", error);
+        }
       }
+
+      // අලුතින්ම පිරිසිදු Recaptcha එකක් හදනවා
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
       const appVerifier = (window as any).recaptchaVerifier;
+      // ========================================================
 
       // මෙතනට ඔයාගේ SMS එක යන්න ඕන Admin ගේ ෆෝන් නම්බර් එක දාන්න (Country Code එකත් එක්ක)
       const adminPhoneNumber = "+94770000078"; 
@@ -383,6 +393,7 @@ export default function AuthPage() {
                           maxLength={1}
                           value={digit}
                           disabled={isLoading}
+                          autoFocus={index === 0} // මෙතනත් Auto-focus එකතු කළා
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner disabled:opacity-50"
