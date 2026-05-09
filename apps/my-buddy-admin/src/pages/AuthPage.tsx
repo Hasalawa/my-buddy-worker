@@ -10,9 +10,14 @@ import logo from '../assets/images/logo.png';
 import logoLight from '../assets/images/logo_lightMode.png';
 import { sendDiscordLog } from '../utils/discord';
 
-// Firebase imports (ඔයාගේ firebase config file එක තියෙන තැනට path එක වෙනස් කරගන්න)
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../config/firebase'; // Example path
+// Firebase imports 
+import { 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
+} from 'firebase/auth';
+import { auth } from '../config/firebase'; 
 
 // --- Framer Motion Variants ---
 const containerVariants: Variants = {
@@ -57,12 +62,15 @@ export default function AuthPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Firebase SMS OTP Confirmation Object Save කරගන්න State එක
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
   // 2FA එකට ආවම පළවෙනි input එකට auto-focus කරන්න
   useEffect(() => {
     if (step === 2) {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
-      }, 300); // Animation එක ඉවරවෙනකම් පොඩි වෙලාවක් (300ms) දීලා focus කරනවා
+      }, 300);
     }
   }, [step]);
 
@@ -76,29 +84,40 @@ export default function AuthPage() {
     toastTimeoutRef.current = setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
-  // --- Utility Validations ---
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   // --- Handlers ---
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 1. Validation
     if (!email || !password) return showToast("Please fill in all fields.", "warning");
     if (!isValidEmail(email)) return showToast("Invalid email format.", "error");
     if (password.length < 6) return showToast("Password must be at least 6 characters.", "warning");
 
     setIsLoading(true);
     try {
-      // 2. Firebase Login
+      // 1. Firebase Email/Password Login
       await signInWithEmailAndPassword(auth, email, password);
       await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
-      showToast("Authentication successful! Proceeding to 2FA...", "success");
-      
-      // Delay for UX smoothly moving to Step 2
+      showToast("Authentication successful! Sending SMS OTP...", "success");
+
+      // 2. Invisible ReCaptcha එක සෙට් කරනවා SMS යවන්න කලින්
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+        });
+      }
+      const appVerifier = (window as any).recaptchaVerifier;
+
+      // මෙතනට ඔයාගේ SMS එක යන්න ඕන Admin ගේ ෆෝන් නම්බර් එක දාන්න (Country Code එකත් එක්ක)
+      const adminPhoneNumber = "+94770000078"; 
+
+      // 3. SMS එක යවනවා
+      const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
+      setConfirmationResult(confirmation); // පස්සේ OTP එක Verify කරන්න මේක සේව් කරගන්නවා
+
       setTimeout(() => setStep(2), 1000); 
     } catch (error: any) {
-      // Handle specific Firebase Errors
       console.error(error);
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         showToast("Invalid email or password.", "error");
@@ -112,19 +131,29 @@ export default function AuthPage() {
     }
   };
 
-  const handle2FASubmit = (e: React.FormEvent) => {
+  const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpCode = otp.join('');
     
     if (otpCode.length < 6) return showToast("Please enter the complete 6-digit code.", "warning");
 
     setIsLoading(true);
-    // මෙතනදී තමයි Backend / Firebase Cloud function එකට OTP එක යවලා verify කරන්නේ
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Firebase එකෙන් SMS OTP එක හරිද කියලා බලනවා
+      if (confirmationResult) {
+        await confirmationResult.confirm(otpCode);
+      }
+      
       showToast("Security verified! Welcome back.", "success");
-      navigate('/dashboard');
-    }, 1500); // Simulated API Call
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
+    } catch (error: any) {
+      console.error("OTP Error:", error);
+      showToast("Invalid verification code. Try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
@@ -151,7 +180,7 @@ export default function AuthPage() {
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // Only allow numbers
+    if (!/^\d*$/.test(value)) return; 
     if (value.length > 1) value = value[0]; 
     
     const newOtp = [...otp];
@@ -172,7 +201,10 @@ export default function AuthPage() {
   return (
     <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300 relative">
       
-      {/* ================= CUSTOM TOAST NOTIFICATION (SweetAlert Style) ================= */}
+      {/* Firebase SMS යවන්න ඕන කරන අදෘශ්‍යමාන ReCaptcha Container එක */}
+      <div id="recaptcha-container"></div>
+
+      {/* ================= CUSTOM TOAST NOTIFICATION ================= */}
       <AnimatePresence>
         {toast.show && (
           <motion.div
