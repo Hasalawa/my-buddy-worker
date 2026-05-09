@@ -1,17 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, Smartphone, RefreshCw, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { 
+  Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, 
+  Smartphone, RefreshCw, Sun, Moon, ArrowLeft, 
+  CheckCircle, XCircle, AlertCircle, Loader2 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
 import logo from '../assets/images/logo.png'; 
 import logoLight from '../assets/images/logo_lightMode.png';
 import { sendDiscordLog } from '../utils/discord';
 
+// Firebase imports (ඔයාගේ firebase config file එක තියෙන තැනට path එක වෙනස් කරගන්න)
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../config/firebase'; // Example path
+
+// --- Framer Motion Variants ---
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-  }
+  show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
 };
 
 const itemVariants: Variants = {
@@ -19,10 +25,17 @@ const itemVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
 };
 
+// --- Custom Toast Type ---
+type ToastType = {
+  show: boolean;
+  message: string;
+  type: 'success' | 'error' | 'warning';
+};
+
 export default function AuthPage() {
   const navigate = useNavigate();
   
-  // --- Theme Management Logic ---
+  // --- Theme Management ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -34,56 +47,123 @@ export default function AuthPage() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-  // ------------------------------
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
-  // 1. Step එක Control කරන්න State එකක් (step 1 = Login, step 2 = 2FA, step 3 = Forgot Password)
+  // --- Form & Flow States ---
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  
-  // 2FA OTP Boxes Control
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Form Submit කරාම 2FA එකට යනවා
-  const handleLoginSubmit = async(e: React.FormEvent) => {
-    e.preventDefault();
-    await sendDiscordLog("🟢 අලුත් Admin කෙනෙක් System එකට සාර්ථකව Login වුණා! \n**Email:** admin@mybuddyworker.com");
-    setStep(2); 
+  // 2FA එකට ආවම පළවෙනි input එකට auto-focus කරන්න
+  useEffect(() => {
+    if (step === 2) {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 300); // Animation එක ඉවරවෙනකම් පොඩි වෙලාවක් (300ms) දීලා focus කරනවා
+    }
+  }, [step]);
+
+  // --- Custom Toast State & Logic ---
+  const [toast, setToast] = useState<ToastType>({ show: false, message: '', type: 'success' });
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ show: true, message, type });
+    toastTimeoutRef.current = setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
-  // 2FA Submit කරාම Dashboard එකට යනවා
+  // --- Utility Validations ---
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // --- Handlers ---
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // 1. Validation
+    if (!email || !password) return showToast("Please fill in all fields.", "warning");
+    if (!isValidEmail(email)) return showToast("Invalid email format.", "error");
+    if (password.length < 6) return showToast("Password must be at least 6 characters.", "warning");
+
+    setIsLoading(true);
+    try {
+      // 2. Firebase Login
+      await signInWithEmailAndPassword(auth, email, password);
+      await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
+      showToast("Authentication successful! Proceeding to 2FA...", "success");
+      
+      // Delay for UX smoothly moving to Step 2
+      setTimeout(() => setStep(2), 1000); 
+    } catch (error: any) {
+      // Handle specific Firebase Errors
+      console.error(error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        showToast("Invalid email or password.", "error");
+      } else if (error.code === 'auth/too-many-requests') {
+        showToast("Too many attempts. Please try again later.", "warning");
+      } else {
+        showToast(error.message || "An error occurred during login.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handle2FASubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    const otpCode = otp.join('');
+    
+    if (otpCode.length < 6) return showToast("Please enter the complete 6-digit code.", "warning");
+
+    setIsLoading(true);
+    // මෙතනදී තමයි Backend / Firebase Cloud function එකට OTP එක යවලා verify කරන්නේ
+    setTimeout(() => {
+      setIsLoading(false);
+      showToast("Security verified! Welcome back.", "success");
+      navigate('/dashboard');
+    }, 1500); // Simulated API Call
   };
 
-  // Forgot Password Form එක Submit කරාම
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await sendDiscordLog("🟡 Admin කෙනෙක් Password Reset Link එකක් Request කළා!");
-    // මෙතනින් Firebase Password Reset Logic එක ඉස්සරහට ලියන්න පුළුවන්
-    alert("If this email is registered, a password reset link will be sent.");
-    setStep(1); // ආයෙත් Login එකට යනවා
+    
+    if (!email) return showToast("Please enter your email address.", "warning");
+    if (!isValidEmail(email)) return showToast("Invalid email format.", "error");
+
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      await sendDiscordLog(`🟡 Password Reset Request: ${email}`);
+      showToast("Password reset link sent to your email.", "success");
+      setTimeout(() => setStep(1), 2000);
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        showToast("No account found with this email.", "error");
+      } else {
+        showToast("Failed to send reset link. Try again.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // OTP අංක ගහද්දි ඊළඟ කොටුවට Auto-Focus වෙන Logic එක
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value[0]; // අංක එකකට වඩා ගහන්න බැරි වෙන්න
+    if (!/^\d*$/.test(value)) return; // Only allow numbers
+    if (value.length > 1) value = value[0]; 
     
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // ඊළඟ කොටුවට යන්න
     if (value !== '' && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Backspace එබුවම කලින් කොටුවට යන්න
     if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -92,6 +172,31 @@ export default function AuthPage() {
   return (
     <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300 relative">
       
+      {/* ================= CUSTOM TOAST NOTIFICATION (SweetAlert Style) ================= */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 20, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] min-w-[320px]"
+          >
+            <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-md border ${
+              toast.type === 'success' ? 'bg-brand-green/10 border-brand-green/30 text-brand-green' :
+              toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+              'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+            }`}>
+              {toast.type === 'success' && <CheckCircle size={24} className="animate-pulse" />}
+              {toast.type === 'error' && <XCircle size={24} />}
+              {toast.type === 'warning' && <AlertCircle size={24} />}
+              <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
+                {toast.message}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- Theme Toggle Button --- */}
       <button 
         onClick={toggleTheme} 
@@ -110,8 +215,6 @@ export default function AuthPage() {
         ))}
         
         <div className="relative z-10 w-full max-w-lg mx-auto flex flex-col items-start gap-10">
-          
-          {/* Desktop ලෝගෝ මාරුව */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, type: "spring" }}>
             <motion.img src={logo} alt="My Buddy Worker" className="hidden dark:block h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
             <motion.img src={logoLight} alt="My Buddy Worker" className="block dark:hidden h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
@@ -145,16 +248,11 @@ export default function AuthPage() {
             </div>
           </motion.div>
         </div>
-        
-        <div className="absolute bottom-8 left-12 lg:left-20 z-10 text-sm text-gray-400 dark:text-gray-600 font-medium transition-colors duration-300">
-          © {new Date().getFullYear()} My Buddy Worker.
-        </div>
       </div>
 
       {/* ---------------- RIGHT SIDE: Forms Area ---------------- */}
       <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-24 relative bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-colors duration-300">
         
-        {/* Mobile ලෝගෝ මාරුව */}
         <motion.div className="absolute top-8 left-8 lg:hidden" animate={{ y: [-4, 4, -4] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
           <img src={logo} alt="Logo" className="hidden dark:block h-20 object-contain" />
           <img src={logoLight} alt="Logo" className="block dark:hidden h-20 object-contain" />
@@ -165,7 +263,6 @@ export default function AuthPage() {
 
           <div className="relative z-10 overflow-hidden px-1">
             
-            {/* Status Badge */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.4 }} className="mb-8">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-green/10 border border-brand-green/20 text-brand-green text-xs font-semibold tracking-wide uppercase shadow-[0_0_15px_rgba(0,204,68,0.15)]">
                 <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
@@ -173,32 +270,39 @@ export default function AuthPage() {
               </div>
             </motion.div>
 
-            {/* AnimatePresence එකෙන් Forms මාරු කරද්දි Slide වෙන Animation එකක් දෙනවා */}
             <AnimatePresence mode="wait">
               
               {/* ================= STEP 1: LOGIN FORM ================= */}
               {step === 1 && (
-                <motion.div 
-                  key="login-form"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <motion.div key="login-form" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                   <div className="mb-8">
                     <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Secure Login</h2>
                     <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base transition-colors duration-300">Enter your administrative credentials to continue.</p>
                   </div>
 
-                  <form className="space-y-5" onSubmit={handleLoginSubmit}>
+                  <form className="space-y-5" onSubmit={handleLoginSubmit} noValidate>
                     <div className="group relative">
                       <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input type="email" placeholder="admin@mybuddyworker.com" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
+                      <input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="admin@mybuddyworker.com" 
+                        disabled={isLoading}
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                      />
                     </div>
 
                     <div className="group relative">
                       <Lock className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input type="password" placeholder="••••••••" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
+                      <input 
+                        type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••" 
+                        disabled={isLoading}
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                      />
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
@@ -211,26 +315,21 @@ export default function AuthPage() {
                       </button>
                     </div>
 
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
-                      <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                    <motion.button disabled={isLoading} whileHover={!isLoading ? { scale: 1.02 } : {}} whileTap={!isLoading ? { scale: 0.98 } : {}} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)] disabled:opacity-70 disabled:cursor-not-allowed">
+                      {!isLoading && <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />}
                       <span className="relative flex items-center justify-center gap-2 text-lg">
-                        Continue
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        {isLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                          <>Continue <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
+                        )}
                       </span>
                     </motion.button>
                   </form>
                 </motion.div>
               )}
 
-              {/* ================= STEP 2: TWO-FACTOR AUTH (2FA) FORM ================= */}
+              {/* ================= STEP 2: TWO-FACTOR AUTH (2FA) ================= */}
               {step === 2 && (
-                <motion.div 
-                  key="2fa-form"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <motion.div key="2fa-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
                   <div className="mb-8">
                     <div className="w-12 h-12 bg-brand-green/10 border border-brand-green/20 rounded-2xl flex items-center justify-center mb-6 text-brand-green">
                       <Smartphone size={24} />
@@ -242,8 +341,6 @@ export default function AuthPage() {
                   </div>
 
                   <form className="space-y-8" onSubmit={handle2FASubmit}>
-                    
-                    {/* OTP 6-Digit Boxes */}
                     <div className="flex justify-between gap-2 sm:gap-3">
                       {otp.map((digit, index) => (
                         <input
@@ -253,62 +350,62 @@ export default function AuthPage() {
                           inputMode="numeric"
                           maxLength={1}
                           value={digit}
+                          disabled={isLoading}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                          className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner"
+                          className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner disabled:opacity-50"
                         />
                       ))}
                     </div>
 
                     <div className="flex flex-col gap-4 mt-6">
-                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
-                        <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                      <motion.button disabled={isLoading} whileHover={!isLoading ? { scale: 1.02 } : {}} whileTap={!isLoading ? { scale: 0.98 } : {}} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)] disabled:opacity-70 disabled:cursor-not-allowed">
+                        {!isLoading && <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />}
                         <span className="relative flex items-center justify-center gap-2 text-lg">
-                          <ShieldCheck size={20} />
-                          Verify & Access Dashboard
+                          {isLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                            <><ShieldCheck size={20} /> Verify & Access Dashboard</>
+                          )}
                         </span>
                       </motion.button>
                       
-                      <button type="button" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-2">
-                        <RefreshCw size={14} /> Didn't receive the code? Resend
+                      <button type="button" disabled={isLoading} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} /> Didn't receive the code? Resend
                       </button>
                     </div>
                   </form>
                 </motion.div>
               )}
 
-              {/* ================= STEP 3: FORGOT PASSWORD FORM ================= */}
+              {/* ================= STEP 3: FORGOT PASSWORD ================= */}
               {step === 3 && (
-                <motion.div 
-                  key="forgot-password-form"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <motion.div key="forgot-password-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                   <div className="mb-8">
-                    <button 
-                      type="button" 
-                      onClick={() => setStep(1)} 
-                      className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-green transition-colors"
-                    >
+                    <button type="button" onClick={() => setStep(1)} className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-green transition-colors">
                       <ArrowLeft size={16} /> Back to Login
                     </button>
                     <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Reset Password</h2>
                     <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base transition-colors duration-300">Enter your email address and we'll send you a link to reset your password.</p>
                   </div>
 
-                  <form className="space-y-5" onSubmit={handleForgotPasswordSubmit}>
+                  <form className="space-y-5" onSubmit={handleForgotPasswordSubmit} noValidate>
                     <div className="group relative">
                       <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input type="email" placeholder="admin@mybuddyworker.com" required className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner" />
+                      <input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="admin@mybuddyworker.com" 
+                        disabled={isLoading}
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                      />
                     </div>
 
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)]">
-                      <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                    <motion.button disabled={isLoading} whileHover={!isLoading ? { scale: 1.02 } : {}} whileTap={!isLoading ? { scale: 0.98 } : {}} type="submit" className="w-full relative group overflow-hidden bg-brand-green text-black font-bold py-4 rounded-xl mt-6 transition-all shadow-[0_0_20px_rgba(0,204,68,0.2)] hover:shadow-[0_0_30px_rgba(0,204,68,0.4)] disabled:opacity-70 disabled:cursor-not-allowed">
+                      {!isLoading && <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />}
                       <span className="relative flex items-center justify-center gap-2 text-lg">
-                        Send Reset Link
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        {isLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                          <>Send Reset Link <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
+                        )}
                       </span>
                     </motion.button>
                   </form>
