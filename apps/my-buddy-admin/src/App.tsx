@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Admins from "./pages/Admins";
 import AppComplaints from "./pages/Complaints";
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<AuthPage />} />
-
+<Route element={<ProtectedRoute />}>
         {/* Protected Admin Routes (Layout එක ඇතුලේ) */}
         <Route element={<AdminLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -37,7 +38,7 @@ function App() {
           <Route path="/admins" element={<Admins />} />
           <Route path="/app-complaints" element={<AppComplaints />} />
         </Route>
-
+</Route>
         {/* වැරදි ලින්ක් එකකට ගියොත් Dashboard එකට යවන්න */}
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
         <Route path="*" element={<NotFound />} />

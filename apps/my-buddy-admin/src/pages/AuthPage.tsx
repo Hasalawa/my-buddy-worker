@@ -155,6 +155,7 @@ export default function AuthPage() {
       }
       
       showToast("Security verified! Welcome back.", "success");
+      sessionStorage.setItem('is2FAVerified', 'true');
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
