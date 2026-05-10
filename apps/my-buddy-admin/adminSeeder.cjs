@@ -30,6 +30,7 @@ const seedSuperAdmin = async () => {
       uid: uid,
       name: "Kehan Hasalawa",
       email: "superadmin@mybuddyworker.com",
+      mobile: "0771234567",
       nic: "123456789V",
       role: "Super Admin",
       loginTime: admin.firestore.FieldValue.serverTimestamp(),
