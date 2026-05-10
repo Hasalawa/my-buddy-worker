@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 
 const serviceAccount = require("./serviceAccountKey.json");
+const { log } = require("console");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -15,7 +16,7 @@ const seedSuperAdmin = async () => {
 
     const userRecord = await auth.createUser({
       email: "superadmin@mybuddyworker.com",
-      password: "SuperSecretPassword123!",
+      password: "Admin@12345",
       displayName: "Kehan Hasalawa",
     });
 
@@ -29,7 +30,10 @@ const seedSuperAdmin = async () => {
       uid: uid,
       name: "Kehan Hasalawa",
       email: "superadmin@mybuddyworker.com",
+      nic: "123456789V",
       role: "Super Admin",
+      loginTime: admin.firestore.FieldValue.serverTimestamp(),
+      logoutTime: null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       permissions: {
         manageUsers: true,
