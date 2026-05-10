@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, Plus, ShieldCheck, Shield, 
-  Edit, Trash2, Ban, CheckCircle2, Clock
+  Edit, Trash2, Ban, CheckCircle2, Clock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 const containerVariants: Variants = {
@@ -16,27 +16,45 @@ const itemVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
 };
 
-// --- Dummy Data (NIC එකතු කළා) ---
+// --- Dummy Data (NIC & Mobile එකතු කළා, Pagination බලන්න තව දෙන්නෙක් දැම්මා) ---
 const adminData = [
-  { id: 'ADM-001', name: 'Kehan Hasalawa', email: 'kehan@mybuddyworker.com', nic: '199912345678', role: 'Super Admin', status: 'Active', lastActive: 'Just now', permissions: ['All Access'] },
-  { id: 'ADM-002', name: 'Sahan Dilshan', email: 'tharindra@mybuddyworker.com', nic: '199856789123', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
-  { id: 'ADM-003', name: 'Nimal Perera', email: 'nimal@mybuddyworker.com', nic: '198512345678', role: 'Moderator', status: 'Offline', lastActive: '2 days ago', permissions: ['Jobs', 'Support'] },
-  { id: 'ADM-004', name: 'Kasun Kalhara', email: 'kasun@mybuddyworker.com', nic: '199012345678', role: 'Moderator', status: 'Suspended', lastActive: '1 month ago', permissions: ['None'] },
+  { id: 'ADM-001', name: 'Kehan Hasalawa', email: 'kehan@mybuddyworker.com', nic: '199912345678', mobile: '+94 77 123 4567', role: 'Super Admin', status: 'Active', lastActive: 'Just now', permissions: ['All Access'] },
+  { id: 'ADM-002', name: 'Sahan Dilshan', email: 'tharindra@mybuddyworker.com', nic: '199856789123', mobile: '+94 71 234 5678', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
+  { id: 'ADM-003', name: 'Nimal Perera', email: 'nimal@mybuddyworker.com', nic: '198512345678', mobile: '+94 70 345 6789', role: 'Moderator', status: 'Offline', lastActive: '2 days ago', permissions: ['Jobs', 'Support'] },
+  { id: 'ADM-004', name: 'Kasun Kalhara', email: 'kasun@mybuddyworker.com', nic: '199012345678', mobile: '+94 75 456 7890', role: 'Moderator', status: 'Suspended', lastActive: '1 month ago', permissions: ['None'] },
+  { id: 'ADM-005', name: 'Amal Silva', email: 'amal@mybuddyworker.com', nic: '199212345678', mobile: '+94 72 567 8901', role: 'Moderator', status: 'Active', lastActive: '5 hours ago', permissions: ['Users', 'Support'] },
+  { id: 'ADM-006', name: 'Sunil Shantha', email: 'sunil@mybuddyworker.com', nic: '198812345678', mobile: '+94 78 678 9012', role: 'Moderator', status: 'Offline', lastActive: '1 week ago', permissions: ['Jobs'] },
 ];
 
 export default function Admins() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<'All' | 'Super Admin' | 'Moderator'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4; // එක පිටුවකට පෙන්නන ප්‍රමාණය
 
   // Search & Filter Logic
   const filteredAdmins = adminData.filter(admin => {
     const matchesFilter = filter === 'All' || admin.role === filter;
     const matchesSearch = admin.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           admin.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          admin.nic.includes(searchQuery); // NIC එකෙනුත් Search කරන්න හැදුවා
+                          admin.nic.includes(searchQuery) ||
+                          admin.mobile.includes(searchQuery); // Phone එකෙනුත් Search කරන්න හැදුවා
     return matchesFilter && matchesSearch;
   });
+
+  // Filter එකක් හරි Search එකක් හරි කරාම ආයෙත් 1 වෙනි පිටුවට යන්න
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery]);
+
+  // Pagination Math Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentAdmins = filteredAdmins.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
 
   return (
     <div className="w-full relative overflow-x-clip pb-10">
@@ -65,7 +83,6 @@ export default function Admins() {
                 className="bg-transparent border-none outline-none text-sm w-full sm:w-48 placeholder:text-gray-400 dark:placeholder:text-gray-600 text-gray-900 dark:text-white" 
               />
             </div>
-            {/* අලුත් Admin කෙනෙක් හදන පිටුවට යන බොත්තම */}
             <button 
               onClick={() => navigate('/add-admin')}
               className="flex items-center justify-center gap-2 bg-brand-green hover:bg-emerald-500 text-black px-4 py-2.5 rounded-xl transition-colors text-sm font-bold shadow-[0_0_15px_rgba(0,204,68,0.2)] shrink-0"
@@ -84,13 +101,14 @@ export default function Admins() {
         </motion.div>
 
         {/* Admins Table */}
-        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-xl min-h-[400px] transition-colors duration-300">
-          <div className="overflow-x-auto custom-scrollbar pb-4">
+        <motion.div variants={itemVariants} className="bg-white/80 dark:bg-[#111111]/80 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-xl min-h-[400px] flex flex-col justify-between transition-colors duration-300">
+          <div className="overflow-x-auto custom-scrollbar pb-4 flex-1">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
                 <tr>
                   <th className="pb-4 font-medium px-4">Staff Member</th>
-                  <th className="pb-4 font-medium px-4">NIC Number</th> {/* අලුත් NIC Column එක */}
+                  <th className="pb-4 font-medium px-4">NIC Number</th>
+                  <th className="pb-4 font-medium px-4">Mobile Number</th> {/* අලුත් Mobile Column එක */}
                   <th className="pb-4 font-medium px-4">Role & Access</th>
                   <th className="pb-4 font-medium px-4">Status</th>
                   <th className="pb-4 font-medium px-4">Last Active</th>
@@ -98,8 +116,9 @@ export default function Admins() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50 transition-colors duration-300">
-                <AnimatePresence>
-                  {filteredAdmins.map((admin) => (
+                <AnimatePresence mode='wait'>
+                  {/* මෙතන filteredAdmins වෙනුවට currentAdmins පාවිච්චි කරා */}
+                  {currentAdmins.map((admin) => (
                     <motion.tr 
                       key={admin.id}
                       layout
@@ -124,9 +143,13 @@ export default function Admins() {
                         </div>
                       </td>
                       
-                      {/* NIC දත්ත පෙන්වන තැන */}
                       <td className="py-4 px-4 text-gray-600 dark:text-gray-300 font-mono text-xs transition-colors duration-300">
                         {admin.nic}
+                      </td>
+
+                      {/* Mobile Number දත්ත පෙන්වන තැන */}
+                      <td className="py-4 px-4 text-gray-600 dark:text-gray-300 font-mono text-xs transition-colors duration-300">
+                        {admin.mobile}
                       </td>
 
                       <td className="py-4 px-4">
@@ -162,7 +185,6 @@ export default function Admins() {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {/* Edit බොත්තමට onClick එක දැම්මා */}
                           <button 
                             onClick={() => navigate('/add-admin', { state: { editData: admin } })}
                             className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-500/20 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip-trigger" 
@@ -179,7 +201,7 @@ export default function Admins() {
                   ))}
                   {filteredAdmins.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                      <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
                         No administrators found matching your criteria.
                       </td>
                     </tr>
@@ -188,6 +210,47 @@ export default function Admins() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination UI එක */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-800 transition-colors duration-300">
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                Showing <span className="font-semibold text-gray-900 dark:text-white">{indexOfFirstItem + 1}</span> to <span className="font-semibold text-gray-900 dark:text-white">{Math.min(indexOfLastItem, filteredAdmins.length)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{filteredAdmins.length}</span> entries
+              </span>
+              
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index + 1)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === index + 1 
+                        ? 'bg-brand-green text-black border border-brand-green' 
+                        : 'border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
 
       </motion.div>
