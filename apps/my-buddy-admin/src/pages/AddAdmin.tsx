@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle } from 'lucide-react';
+import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle, IdCard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // --- Animations ---
 const containerVariants: Variants = {
@@ -14,6 +15,8 @@ const itemVariants: Variants = {
 };
 
 export default function AddAdmin() {
+  const navigate = useNavigate(); // Back button එක වැඩ කරන්න මේක ගත්තා
+  
   const [selectedRole, setSelectedRole] = useState('Moderator');
   const [permissions, setPermissions] = useState({
     manageUsers: true,
@@ -37,7 +40,10 @@ export default function AddAdmin() {
         
         {/* Header Section (Responsive flex-col on mobile) */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-          <button className="w-10 h-10 flex items-center justify-center shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-brand-green dark:hover:border-brand-green transition-colors">
+          <button 
+            onClick={() => navigate(-1)} // කලින් පිටුවට යන Function එක දැම්මා
+            className="w-10 h-10 flex items-center justify-center shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-brand-green dark:hover:border-brand-green transition-colors"
+          >
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -86,7 +92,20 @@ export default function AddAdmin() {
                   </div>
                 </div>
 
-                <div className="space-y-2 sm:col-span-2">
+                {/* අලුතින් එකතු කරපු NIC Field එක */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">NIC Number</label>
+                  <div className="relative group">
+                    <IdCard className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 group-focus-within:text-brand-green transition-colors" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 199912345678" 
+                      className="w-full bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">Temporary Password</label>
                   <div className="relative group">
                     <Key className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 group-focus-within:text-brand-green transition-colors" />
