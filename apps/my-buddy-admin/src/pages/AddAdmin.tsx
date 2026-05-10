@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle, IdCard } from 'lucide-react';
+import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle, IdCard, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // --- Animations ---
@@ -105,7 +105,20 @@ export default function AddAdmin() {
                   </div>
                 </div>
 
+                {/* අලුතින් එකතු කරපු Mobile Number Field එක */}
                 <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">Mobile Number</label>
+                  <div className="relative group">
+                    <Phone className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 group-focus-within:text-brand-green transition-colors" />
+                    <input 
+                      type="tel" 
+                      placeholder="e.g. +94770000000" 
+                      className="w-full bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
                   <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">Temporary Password</label>
                   <div className="relative group">
                     <Key className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 group-focus-within:text-brand-green transition-colors" />
