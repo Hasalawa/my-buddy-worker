@@ -16,12 +16,12 @@ const itemVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
 };
 
-// --- Dummy Data ---
+// --- Dummy Data (NIC එකතු කළා) ---
 const adminData = [
-  { id: 'ADM-001', name: 'Kehan Hasalawa', email: 'kehan@mybuddyworker.com', role: 'Super Admin', status: 'Active', lastActive: 'Just now', permissions: ['All Access'] },
-  { id: 'ADM-002', name: 'Sahan Dilshan', email: 'tharindra@mybuddyworker.com', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
-  { id: 'ADM-003', name: 'Nimal Perera', email: 'nimal@mybuddyworker.com', role: 'Moderator', status: 'Offline', lastActive: '2 days ago', permissions: ['Jobs', 'Support'] },
-  { id: 'ADM-004', name: 'Kasun Kalhara', email: 'kasun@mybuddyworker.com', role: 'Moderator', status: 'Suspended', lastActive: '1 month ago', permissions: ['None'] },
+  { id: 'ADM-001', name: 'Kehan Hasalawa', email: 'kehan@mybuddyworker.com', nic: '199912345678', role: 'Super Admin', status: 'Active', lastActive: 'Just now', permissions: ['All Access'] },
+  { id: 'ADM-002', name: 'Sahan Dilshan', email: 'tharindra@mybuddyworker.com', nic: '199856789123', role: 'Moderator', status: 'Active', lastActive: '10 mins ago', permissions: ['Users', 'Jobs', 'Support'] },
+  { id: 'ADM-003', name: 'Nimal Perera', email: 'nimal@mybuddyworker.com', nic: '198512345678', role: 'Moderator', status: 'Offline', lastActive: '2 days ago', permissions: ['Jobs', 'Support'] },
+  { id: 'ADM-004', name: 'Kasun Kalhara', email: 'kasun@mybuddyworker.com', nic: '199012345678', role: 'Moderator', status: 'Suspended', lastActive: '1 month ago', permissions: ['None'] },
 ];
 
 export default function Admins() {
@@ -33,7 +33,8 @@ export default function Admins() {
   const filteredAdmins = adminData.filter(admin => {
     const matchesFilter = filter === 'All' || admin.role === filter;
     const matchesSearch = admin.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          admin.email.toLowerCase().includes(searchQuery.toLowerCase());
+                          admin.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          admin.nic.includes(searchQuery); // NIC එකෙනුත් Search කරන්න හැදුවා
     return matchesFilter && matchesSearch;
   });
 
@@ -89,6 +90,7 @@ export default function Admins() {
               <thead className="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
                 <tr>
                   <th className="pb-4 font-medium px-4">Staff Member</th>
+                  <th className="pb-4 font-medium px-4">NIC Number</th> {/* අලුත් NIC Column එක */}
                   <th className="pb-4 font-medium px-4">Role & Access</th>
                   <th className="pb-4 font-medium px-4">Status</th>
                   <th className="pb-4 font-medium px-4">Last Active</th>
@@ -121,6 +123,12 @@ export default function Admins() {
                           </div>
                         </div>
                       </td>
+                      
+                      {/* NIC දත්ත පෙන්වන තැන */}
+                      <td className="py-4 px-4 text-gray-600 dark:text-gray-300 font-mono text-xs transition-colors duration-300">
+                        {admin.nic}
+                      </td>
+
                       <td className="py-4 px-4">
                         <div className="flex flex-col items-start gap-1.5">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300 ${
@@ -154,7 +162,12 @@ export default function Admins() {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-500/20 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip-trigger" title="Edit Permissions">
+                          {/* Edit බොත්තමට onClick එක දැම්මා */}
+                          <button 
+                            onClick={() => navigate('/add-admin', { state: { editData: admin } })}
+                            className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-500/20 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip-trigger" 
+                            title="Edit Permissions"
+                          >
                             <Edit size={16} />
                           </button>
                           <button className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-500/20 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors tooltip-trigger" title={admin.status === 'Suspended' ? 'Delete Account' : 'Suspend Account'}>
@@ -166,7 +179,7 @@ export default function Admins() {
                   ))}
                   {filteredAdmins.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                      <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-300">
                         No administrators found matching your criteria.
                       </td>
                     </tr>
