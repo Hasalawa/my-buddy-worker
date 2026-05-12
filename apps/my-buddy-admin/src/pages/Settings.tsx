@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { 
   User, Shield, Sliders, Bell, Save, 
   Smartphone, Key, Mail, Building 
 } from 'lucide-react';
+
+// updateDoc වෙනුවට setDoc import කරගත්තා
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, auth } from '../config/firebase';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -19,10 +23,61 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'system' | 'notifications'>('profile');
 
   // Toggle States
-  const [twoFactor, setTwoFactor] = useState(true);
+  const [twoFactor, setTwoFactor] = useState(false);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [pushAlerts, setPushAlerts] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  // Settings පිටුවට එද්දී Database එකේ තියෙන ඇත්ත 2FA තත්ත්වය අරන් Toggle එකට දානවා
+  useEffect(() => {
+    const fetchAdminSettings = async () => {
+      if (auth.currentUser) {
+        try {
+          const adminRef = doc(db, 'admins', auth.currentUser.uid);
+          const docSnap = await getDoc(adminRef);
+          
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Database එකේ true කියලා තිබ්බොත් විතරක් On කරනවා
+            if (data.twoFactorEnabled === true) {
+              setTwoFactor(true);
+            } else {
+              setTwoFactor(false);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching admin data:", error);
+        }
+      }
+    };
+
+    fetchAdminSettings();
+  }, []);
+
+  // 2FA Firebase එකට Update කරන Function එක
+  const handle2FAToggle = async () => {
+    const newValue = !twoFactor;
+    setTwoFactor(newValue); // මුලින්ම UI එක Update කරනවා
+
+    try {
+      if (auth.currentUser) {
+        const adminRef = doc(db, 'admins', auth.currentUser.uid);
+        
+        // අලුත් ඒව හැදෙන්නෙ නැති වෙන්න, පරණ එකම Update වෙන්න setDoc with merge:true පාවිච්චි කරනවා
+        await setDoc(adminRef, {
+          twoFactorEnabled: newValue
+        }, { merge: true });
+        
+        console.log(`✅ 2FA Status updated to: ${newValue}`);
+      } else {
+        console.warn("User not authenticated.");
+        setTwoFactor(!newValue);
+      }
+    } catch (error) {
+      console.error("❌ Error updating 2FA settings:", error);
+      setTwoFactor(!newValue); // Error එකක් ආවොත් කලින් තිබ්බ විදියටම හදනවා
+    }
+  };
 
   return (
     <div className="w-full relative overflow-x-clip pb-10">
@@ -106,7 +161,7 @@ export default function Settings() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">Adds an extra layer of security using a mobile OTP.</p>
                         </div>
                       </div>
-                      <ToggleSwitch enabled={twoFactor} onToggle={() => setTwoFactor(!twoFactor)} />
+                      <ToggleSwitch enabled={twoFactor} onToggle={handle2FAToggle} />
                     </div>
                   </div>
                 </motion.div>
@@ -221,11 +276,9 @@ function ToggleSwitch({ enabled, onToggle, danger = false }: any) {
       className={`w-12 h-6 sm:w-14 sm:h-7 rounded-full relative cursor-pointer transition-colors duration-300 shrink-0 ${enabled ? activeColor : 'bg-gray-200 dark:bg-gray-800'}`} 
       onClick={onToggle}
     >
-      <motion.div 
-        layout
-        className="absolute top-1 bottom-1 w-4 sm:w-5 bg-white rounded-full shadow-sm"
-        animate={{ left: enabled ? 'calc(100% - 1.25rem - 4px)' : '0.25rem' }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      <div 
+        className="absolute top-1 bottom-1 w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-full shadow-sm transition-all duration-300 ease-in-out"
+        style={{ left: enabled ? 'calc(100% - 1.25rem - 4px)' : '0.25rem' }}
       />
     </div>
   );

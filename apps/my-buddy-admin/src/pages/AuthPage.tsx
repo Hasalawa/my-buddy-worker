@@ -17,7 +17,8 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber
 } from 'firebase/auth';
-import { auth } from '../config/firebase'; 
+import { doc, getDoc } from 'firebase/firestore'; // Firestore වලින් දත්ත ගන්න මේක එකතු කළා
+import { auth, db } from '../config/firebase'; // db එකත් import කළා
 
 // --- Framer Motion Variants ---
 const containerVariants: Variants = {
@@ -97,36 +98,51 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       // 1. Firebase Email/Password Login
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
-      showToast("Authentication successful! Sending SMS OTP...", "success");
+      
+      // 2. Database එකෙන් බලනවා මෙයාට 2FA Enable කරලාද තියෙන්නේ කියලා
+      const adminRef = doc(db, 'admins', user.uid);
+      const adminSnap = await getDoc(adminRef);
+      const adminData = adminSnap.exists() ? adminSnap.data() : null;
 
-      // ========================================================
-      // 2. පරණ Recaptcha එකක් තියෙනවා නම් ඒක සම්පූර්ණයෙන්ම අයින් කරනවා
-      if ((window as any).recaptchaVerifier) {
-        try {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = null;
-        } catch (error) {
-          console.error("Recaptcha clear error", error);
+      // 2FA On කරලා නම් විතරක් SMS යවනවා
+      if (adminData && adminData.twoFactorEnabled === true) {
+        showToast("Authentication successful! Sending SMS OTP...", "success");
+
+        if (!(window as any).recaptchaVerifier) {
+          try {
+            (window as any).recaptchaVerifier.clear();
+            (window as any).recaptchaVerifier = null;
+          } catch (error) {
+            console.error("Recaptcha clear error", error);
+          }
         }
+
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+        });
+        const appVerifier = (window as any).recaptchaVerifier;
+
+        // Database එකේ තියෙන ෆෝන් නම්බර් එක ගන්නවා. නැත්නම් hardcode කරපු එක ගන්නවා
+        const adminPhoneNumber = adminData.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078"; 
+
+        const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
+        setConfirmationResult(confirmation); 
+
+        setTimeout(() => setStep(2), 1000); 
+
+      } else {
+        // 2FA Off කරලා නම් කෙලින්ම Dashboard එකට යවනවා
+        showToast("Authentication successful! Welcome back.", "success");
+        sessionStorage.setItem('is2FAVerified', 'true'); // Bypass the ProtectedRoute check
+        
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       }
 
-      // අලුතින්ම පිරිසිදු Recaptcha එකක් හදනවා
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-      });
-      const appVerifier = (window as any).recaptchaVerifier;
-      // ========================================================
-
-      // මෙතනට ඔයාගේ SMS එක යන්න ඕන Admin ගේ ෆෝන් නම්බර් එක දාන්න (Country Code එකත් එක්ක)
-      const adminPhoneNumber = "+94770000078"; 
-
-      // 3. SMS එක යවනවා
-      const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
-      setConfirmationResult(confirmation); // පස්සේ OTP එක Verify කරන්න මේක සේව් කරගන්නවා
-
-      setTimeout(() => setStep(2), 1000); 
     } catch (error: any) {
       console.error(error);
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -149,7 +165,6 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // Firebase එකෙන් SMS OTP එක හරිද කියලා බලනවා
       if (confirmationResult) {
         await confirmationResult.confirm(otpCode);
       }
@@ -379,7 +394,7 @@ export default function AuthPage() {
                     </div>
                     <h2 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white transition-colors duration-300">Two-Step Verification</h2>
                     <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base leading-relaxed transition-colors duration-300">
-                      We've sent a 6-digit verification code to your registered mobile device ending in <strong className="text-gray-900 dark:text-white">**78</strong>.
+                      We've sent a 6-digit verification code to your registered mobile device.
                     </p>
                   </div>
 
@@ -394,7 +409,7 @@ export default function AuthPage() {
                           maxLength={1}
                           value={digit}
                           disabled={isLoading}
-                          autoFocus={index === 0} // මෙතනත් Auto-focus එකතු කළා
+                          autoFocus={index === 0} 
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner disabled:opacity-50"
