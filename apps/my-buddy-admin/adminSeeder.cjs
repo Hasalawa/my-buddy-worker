@@ -33,6 +33,7 @@ const seedSuperAdmin = async () => {
       mobile: "0771234567",
       nic: "123456789V",
       role: "Super Admin",
+      twoFactorEnabled: true,
       loginTime: admin.firestore.FieldValue.serverTimestamp(),
       logoutTime: null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
