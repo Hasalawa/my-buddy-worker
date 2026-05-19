@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle, IdCard, Phone, RotateCcw, X } from 'lucide-react';
+import { UserPlus, Shield, Mail, Key, ShieldCheck, ArrowLeft, Check, AlertCircle, IdCard, Phone, RotateCcw, X, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { auth, db } from '../config/firebase';
@@ -36,11 +36,13 @@ export default function AddAdmin() {
   // Generated States
   const [randomDigits, setRandomDigits] = useState('');
   const [computedEmail, setComputedEmail] = useState('');
-  const [generatedPassword, setGeneratedPassword] = useState('Auto-generated upon creation');
+  const [generatedPassword, setGeneratedPassword] = useState('');
 
   // Dialog & Status States
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showClosePasswordConfirmDialog, setShowClosePasswordConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Auto-closing Toast Notification State ---
@@ -49,27 +51,21 @@ export default function AddAdmin() {
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
-    // කලින් timeout එකක් තිබ්බොත් ඒක clear කරනවා
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
     }
-    // තත්පර 3කින් toast එක අයින් කරනවා
     toastTimeoutRef.current = setTimeout(() => {
       setToast(null);
     }, 5000);
   };
 
-  // Generate the 3 random digits when component mounts or resets
   useEffect(() => {
     setRandomDigits(Math.floor(100 + Math.random() * 900).toString());
-
-    // Component එක unmount වෙද්දි timeout එක clear කරනවා
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, []);
 
-  // Update computed email when name changes
   useEffect(() => {
     if (name.trim() !== '') {
       const formattedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -83,7 +79,6 @@ export default function AddAdmin() {
     setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Generate a random secure password
   const generateSecurePassword = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let pass = "";
@@ -93,62 +88,90 @@ export default function AddAdmin() {
     return pass;
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedPassword);
+    showToast("Password copied to clipboard!", "success");
+  };
+
+  // Format Mobile Number to +94...
+  const getFormattedMobile = (num: string) => {
+    let formatted = num.trim();
+    if (formatted.startsWith('0')) {
+      formatted = '+94' + formatted.substring(1);
+    } else if (!formatted.startsWith('+94')) {
+      formatted = '+94' + formatted;
+    }
+    return formatted;
+  };
+
   // --- Validation Logic ---
   const handleValidationAndConfirm = async () => {
     if (!name.trim() || !mobile.trim() || !nic.trim()) {
       return showToast("Please fill in all the required fields (Name, Mobile, NIC).", "error");
     }
 
-    // Sri Lankan NIC Validation (Old 9 digits + V/v or New 12 digits)
     const nicRegex = /^(?:19|20)?\d{9}[vVxX]$|^\d{12}$/;
     if (!nicRegex.test(nic)) {
       return showToast("Invalid NIC format. Please enter a valid Sri Lankan NIC.", "error");
     }
 
-    // Mobile Validation (Sri Lankan formats: 07XXXXXXXX or +947XXXXXXXX)
-    const mobileRegex = /^(07\d{8}|\+947\d{8})$/;
-    if (!mobileRegex.test(mobile)) {
-      return showToast("Invalid mobile number format. Use 07XXXXXXXX or +947XXXXXXXX.", "error");
+    // Checking length after formatting just to be safe
+    const formattedMobile = getFormattedMobile(mobile);
+    const mobileRegex = /^\+947\d{8}$/;
+    if (!mobileRegex.test(formattedMobile)) {
+      return showToast("Invalid mobile number format. Please check the number.", "error");
     }
 
-    // Permissions Validation
     const hasPermission = Object.values(permissions).some(val => val === true);
     if (!hasPermission) {
       return showToast("Please enable at least one specific permission for this admin.", "error");
     }
 
-    // Show Confirmation Dialog before checking Firebase
     setShowConfirmDialog(true);
   };
 
   // --- Firebase Submission Logic ---
   const createAdminInFirebase = async () => {
     setIsSubmitting(true);
+    const formattedMobile = getFormattedMobile(mobile);
+
     try {
 
-      // 1. Check if NIC already exists in Firestore
       const adminsRef = collection(db, 'admins');
-      const q = query(adminsRef, where('nic', '==', nic));
-      const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
+      // 1. Check if NIC exists
+      const qNic = query(adminsRef, where('nic', '==', nic));
+      const nicSnapshot = await getDocs(qNic);
+      if (!nicSnapshot.empty) {
         setShowConfirmDialog(false);
         setIsSubmitting(false);
         return showToast("An admin with this NIC already exists in the system!", "error");
       }
 
-      // 2. Generate Password & Create User in Firebase Auth
+      // 2. Check if Mobile exists
+      const qMobile = query(adminsRef, where('mobile', '==', formattedMobile));
+      const mobileSnapshot = await getDocs(qMobile);
+      if (!mobileSnapshot.empty) {
+        setShowConfirmDialog(false);
+        setIsSubmitting(false);
+        return showToast("An admin with this Mobile Number already exists!", "error");
+      }
+
+      // 3. Generate Password & Create User in Firebase Auth
       const newPassword = generateSecurePassword();
       const userCredential = await createUserWithEmailAndPassword(auth, computedEmail, newPassword);
       const uid = userCredential.user.uid;
 
-      // 3. Save Admin Data to Firestore matching your screenshot structure
+      // Note: If you want to link the phone number to auth here, you'd typically need the user 
+      // to enter an OTP sent to their phone via `linkWithPhoneNumber`. For now, we save it to Firestore.
+
+      // 4. Save Admin Data to Firestore
       await setDoc(doc(db, 'admins', uid), {
         createdAt: serverTimestamp(),
         email: computedEmail,
         loginTime: serverTimestamp(),
         logoutTime: null,
-        mobile: mobile,
+        mobile: formattedMobile,
         name: name,
         nic: nic,
         permissions: {
@@ -158,24 +181,13 @@ export default function AddAdmin() {
           viewFinancials: permissions.viewFinancials
         },
         role: selectedRole,
-        twoFactorEnabled: true, // default to true
+        twoFactorEnabled: true,
         uid: uid
       });
 
-      // 4. Show Password to Super Admin
       setGeneratedPassword(newPassword);
       setShowConfirmDialog(false);
-      showToast("Administrator successfully created!", "success");
-
-
-
-      // --- DUMMY SUCCESS LOGIC (REMOVE WHEN FIREBASE IS ACTIVE) ---
-      // await new Promise(resolve => setTimeout(resolve, 1500));
-      // const fakePassword = generateSecurePassword();
-      // setGeneratedPassword(fakePassword);
-      // setShowConfirmDialog(false);
-      // showToast("Administrator successfully created! (Dummy Success)", "success");
-      // ------------------------------------------------------------
+      setShowPasswordDialog(true);
 
     } catch (error: any) {
       console.error("Error creating admin: ", error);
@@ -186,16 +198,27 @@ export default function AddAdmin() {
     }
   };
 
-  // --- Reset Logic ---
-  const executeReset = () => {
+  // --- Reset Form Function ---
+  const resetForm = () => {
     setName('');
     setMobile('');
     setNic('');
     setSelectedRole('Moderator');
     setPermissions({ manageUsers: true, manageJobs: true, viewFinancials: false, systemSettings: false });
     setRandomDigits(Math.floor(100 + Math.random() * 900).toString());
-    setGeneratedPassword('Auto-generated upon creation');
+    setGeneratedPassword('');
+  };
+
+  const executeReset = () => {
+    resetForm();
     setShowResetDialog(false);
+  };
+
+  // Close the password dialog flow
+  const confirmClosePasswordDialog = () => {
+    setShowClosePasswordConfirmDialog(false);
+    setShowPasswordDialog(false);
+    resetForm(); // Clear the form for the next input
   };
 
   return (
@@ -296,31 +319,10 @@ export default function AddAdmin() {
                       type="tel"
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
-                      placeholder="e.g. +94770000000"
+                      placeholder="e.g. 07XXXXXXXX or +947XXXXXXXX"
                       className="w-full bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 text-sm sm:text-base"
                     />
                   </div>
-                </div>
-
-                {/* Password field updates after creation */}
-                <div className="space-y-2 sm:col-span-2">
-                  <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">Temporary Password</label>
-                  <div className="relative group">
-                    <Key className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 transition-colors" />
-                    <input
-                      type="text"
-                      value={generatedPassword}
-                      readOnly
-                      className={`w-full text-sm sm:text-base transition-colors duration-300 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none ${generatedPassword === 'Auto-generated upon creation'
-                        ? 'bg-gray-100 dark:bg-gray-900/30 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-800/50 cursor-not-allowed'
-                        : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 font-mono font-bold'
-                        }`}
-                    />
-                  </div>
-                  <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1.5 mt-2 transition-colors duration-300">
-                    <AlertCircle size={14} className="shrink-0" />
-                    A secure password link will be emailed to the user.
-                  </p>
                 </div>
               </div>
             </div>
@@ -415,12 +417,16 @@ export default function AddAdmin() {
               className="w-full max-w-md bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 transition-colors duration-300"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mb-4">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  className="w-16 h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mb-4"
+                >
                   <ShieldCheck size={32} />
-                </div>
+                </motion.div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Are you sure?</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  You are about to create a new <strong className="text-gray-800 dark:text-gray-200">{selectedRole}</strong> account for <strong className="text-gray-800 dark:text-gray-200">{name}</strong>. An email and temporary password will be generated.
+                  You are about to create a new <strong className="text-gray-800 dark:text-gray-200">{selectedRole}</strong> account for <strong className="text-gray-800 dark:text-gray-200">{name}</strong>.
                 </p>
                 <div className="flex items-center gap-3 w-full">
                   <button
@@ -456,9 +462,13 @@ export default function AddAdmin() {
               className="w-full max-w-md bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 transition-colors duration-300"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                <motion.div
+                  animate={{ rotate: [0, -15, 15, -15, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", repeatDelay: 1 }}
+                  className="w-16 h-16 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4"
+                >
                   <RotateCcw size={32} />
-                </div>
+                </motion.div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Reset All Fields?</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                   Are you sure you want to clear all entered data? This action cannot be undone.
@@ -475,6 +485,104 @@ export default function AddAdmin() {
                     className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-bold shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                   >
                     Yes, Reset
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Password Reveal Dialog (Post Creation) --- */}
+      <AnimatePresence>
+        {showPasswordDialog && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", duration: 0.5 }}
+              className="w-full max-w-md bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 transition-colors duration-300"
+            >
+              <div className="flex flex-col items-center text-center">
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  className="w-16 h-16 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center mb-4"
+                >
+                  <Key size={32} />
+                </motion.div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Admin Created Successfully!</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Please securely copy the temporary password below. It will only be shown once.
+                </p>
+
+                <div className="w-full mb-6 relative group">
+                  <Key className="absolute left-4 top-3.5 h-5 w-5 text-emerald-500 transition-colors" />
+                  <input
+                    type="text"
+                    value={generatedPassword}
+                    readOnly
+                    className="w-full text-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 rounded-xl py-3 pl-10 pr-12 outline-none font-mono font-bold text-base transition-colors duration-300"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="absolute right-2 top-2 p-1.5 bg-brand-green text-black rounded-lg hover:bg-emerald-500 transition-colors shadow-sm tooltip-trigger"
+                    title="Copy Password"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    onClick={() => setShowClosePasswordConfirmDialog(true)}
+                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors font-semibold"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Close Password Confirm Dialog --- */}
+      <AnimatePresence>
+        {showClosePasswordConfirmDialog && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", duration: 0.5 }}
+              className="w-full max-w-sm bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 transition-colors duration-300"
+            >
+              <div className="flex flex-col items-center text-center">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                  className="w-12 h-12 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center mb-4"
+                >
+                  <AlertCircle size={24} />
+                </motion.div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Are you sure?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Did you copy the password? You won't be able to see it again.
+                </p>
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    onClick={() => setShowClosePasswordConfirmDialog(false)}
+                    className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors font-semibold"
+                  >
+                    No, Wait
+                  </button>
+                  <button
+                    onClick={confirmClosePasswordDialog}
+                    className="flex-1 py-2.5 bg-brand-green hover:bg-emerald-500 text-black rounded-xl transition-colors font-bold shadow-md"
+                  >
+                    Yes, Close
                   </button>
                 </div>
               </div>
