@@ -20,3 +20,4 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/logo_lightMode.png
+    - assets/images/logo_man.png
