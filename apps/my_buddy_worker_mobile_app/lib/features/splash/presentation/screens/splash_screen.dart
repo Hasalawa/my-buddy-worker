@@ -13,35 +13,89 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
+
+  // Background Modern Animations (Floating Blobs)
+  late Animation<Alignment> _blob1Alignment;
+  late Animation<Alignment> _blob2Alignment;
+  late Animation<double> _blobScale;
+
+  // Foreground Animations (Phase 1 & 2)
+  late Animation<double> _manScaleAnimation;
+  late Animation<double> _manOpacityAnimation;
+  late Animation<double> _fullLogoOpacityAnimation;
+  late Animation<double> _fullLogoScaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Setup Animations
+    // මුළු ඇනිමේෂන් එකටම තත්පර 3ක් ලබා දී ඇත (30000ms Typo එක නිවැරදි කර ඇත)
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 3000),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    // --- Modern Ambient Background Animations ---
+    _blob1Alignment = AlignmentTween(
+      begin: const Alignment(-1.5, -1.0),
+      end: const Alignment(1.0, 1.5),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutSine,
+    ));
+
+    _blob2Alignment = AlignmentTween(
+      begin: const Alignment(1.5, 1.0),
+      end: const Alignment(-1.0, -1.5),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutSine,
+    ));
+
+    _blobScale = Tween<double>(begin: 1.0, end: 1.8).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    // --- PHASE 1: Man Icon Pop (0.0 - 0.45) ---
+    _manScaleAnimation = Tween<double>(begin: 0.3, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.45, curve: Curves.elasticOut),
+      ),
+    );
+    _manOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.25, curve: Curves.easeIn),
+      ),
     );
 
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    // --- PHASE 2: Full Logo Reveal (0.50 - 0.90) ---
+    _fullLogoOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.50, 0.90, curve: Curves.easeInOut),
+      ),
+    );
+    _fullLogoScaleAnimation = Tween<double>(begin: 1.1, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.50, 0.90, curve: Curves.easeOutCubic),
+      ),
     );
 
+    // Start Animation
     _animationController.forward();
 
-    // Navigate to next screen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+    // Screen එක මාරු වෙන්න තත්පර 3.5ක් ලබා දී ඇත
+    Timer(const Duration(milliseconds: 3500), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     });
   }
 
@@ -53,93 +107,112 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Current theme එක check කරලා අදාළ ලෝගෝ එක තෝරගන්නවා
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final logoPath = isDarkMode 
-        ? 'assets/images/logo.png' 
+
+    final fullLogoPath = isDarkMode
+        ? 'assets/images/logo.png'
         : 'assets/images/logo_lightMode.png';
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Glow Effect
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.2,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                // මෙතන අලුත් withValues එක දැම්මා
-                color: AppColors.brandGreen.withValues(alpha: isDarkMode ? 0.15 : 0.05),
+      backgroundColor: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white,
+      body: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          final progress = _animationController.value;
+
+          return Stack(
+            children: [
+              // --- 1. Background Cinematic Layer (Floating Orbs) ---
+              // Top-Left to Bottom-Right moving Blob
+              Align(
+                alignment: _blob1Alignment.value,
+                child: Transform.scale(
+                  scale: _blobScale.value,
+                  child: Container(
+                    width: 320,
+                    height: 320,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.brandGreen.withValues(alpha: isDarkMode ? 0.15 : 0.08),
+                          AppColors.brandGreen.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              // Blur effect using BackdropFilter or implicitly handling via Stack (simplified for performance)
-            ),
-          ),
-
-          // Centered Content
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Animated Logo
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Opacity(
-                        opacity: _opacityAnimation.value,
-                        child: Image.asset(
-                          logoPath,
-                          width: 150, // ලෝගෝ එකේ size එක
-                          fit: BoxFit.contain,
-                        ),
+              
+              // Bottom-Right to Top-Left moving Blob
+              Align(
+                alignment: _blob2Alignment.value,
+                child: Transform.scale(
+                  scale: _blobScale.value,
+                  child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.brandGreen.withValues(alpha: isDarkMode ? 0.12 : 0.06),
+                          AppColors.brandGreen.withValues(alpha: 0.0),
+                        ],
                       ),
-                    );
-                  },
-                ),
-                
-                const SizedBox(height: 40),
-
-                // Custom Loading Indicator matching the brand
-                SizedBox(
-                  width: 150,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      backgroundColor: isDarkMode 
-                          ? Colors.grey[800] 
-                          : Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.brandGreen,
-                      ),
-                      minHeight: 4,
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 20),
-                
-                // Status Text
-                FadeTransition(
-                  opacity: _opacityAnimation,
-                  child: Text(
-                    "INITIALIZING WORKSPACE...",
-                    style: TextStyle(
-                      // මෙතන අලුත් withValues එක දැම්මා
-                      color: AppColors.brandGreen.withValues(alpha: 0.8),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
-        ],
+              ),
+
+              // --- 2. Foreground Logo Animation Layer ---
+              Center(
+                // AnimatedSwitcher එක හරහා Man Icon එක සහ Full Logo එක අතර මාරුවීම smooth කර ඇත.
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  child: progress < 0.50
+                      ? _buildPhase1() // Step 1: Man Icon Pop
+                      : _buildPhase2(fullLogoPath), // Step 2: Full Text Reveal
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // --- Phase 1: Man Icon Jumping Out ---
+  Widget _buildPhase1() {
+    return Transform.scale(
+      key: const ValueKey('phase1_man'),
+      scale: _manScaleAnimation.value,
+      child: Opacity(
+        opacity: _manOpacityAnimation.value,
+        child: Image.asset(
+          'assets/images/logo_man.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  // --- Phase 2: Full Logo Smooth Reveal ---
+  Widget _buildPhase2(String fullPath) {
+    return Transform.scale(
+      key: const ValueKey('phase2_logo'),
+      scale: _fullLogoScaleAnimation.value,
+      child: Opacity(
+        opacity: _fullLogoOpacityAnimation.value,
+        child: Image.asset(
+          fullPath,
+          width: 280,
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }
