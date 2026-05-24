@@ -106,8 +106,14 @@ export default function AddAdmin() {
 
   // --- Validation Logic ---
   const handleValidationAndConfirm = async () => {
-    if (!name.trim() || !mobile.trim() || !nic.trim()) {
-      return showToast("Please fill in all the required fields (Name, Mobile, NIC).", "error");
+    if (!name.trim() || !mobile.trim() || !nic.trim() || !computedEmail.trim()) {
+      return showToast("Please fill in all the required fields (Name, Email, Mobile, NIC).", "error");
+    }
+
+    // Email Validation Regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(computedEmail)) {
+      return showToast("Invalid email format. Please enter a valid email.", "error");
     }
 
     const nicRegex = /^(?:19|20)?\d{9}[vVxX]$|^\d{12}$/;
@@ -139,7 +145,16 @@ export default function AddAdmin() {
 
       const adminsRef = collection(db, 'admins');
 
-      // 1. Check if NIC exists
+      // 1. Check if Email already exists 
+      const qEmail = query(adminsRef, where('email', '==', computedEmail));
+      const emailSnapshot = await getDocs(qEmail);
+      if (!emailSnapshot.empty) {
+        setShowConfirmDialog(false);
+        setIsSubmitting(false);
+        return showToast("An admin with this email already exists in the system!", "error");
+      }
+
+      // 2. Check if NIC exists
       const qNic = query(adminsRef, where('nic', '==', nic));
       const nicSnapshot = await getDocs(qNic);
       if (!nicSnapshot.empty) {
@@ -148,7 +163,7 @@ export default function AddAdmin() {
         return showToast("An admin with this NIC already exists in the system!", "error");
       }
 
-      // 2. Check if Mobile exists
+      // 3. Check if Mobile exists
       const qMobile = query(adminsRef, where('mobile', '==', formattedMobile));
       const mobileSnapshot = await getDocs(qMobile);
       if (!mobileSnapshot.empty) {
@@ -157,15 +172,12 @@ export default function AddAdmin() {
         return showToast("An admin with this Mobile Number already exists!", "error");
       }
 
-      // 3. Generate Password & Create User in Firebase Auth
+      // 4. Generate Password & Create User in Firebase Auth
       const newPassword = generateSecurePassword();
       const userCredential = await createUserWithEmailAndPassword(auth, computedEmail, newPassword);
       const uid = userCredential.user.uid;
 
-      // Note: If you want to link the phone number to auth here, you'd typically need the user 
-      // to enter an OTP sent to their phone via `linkWithPhoneNumber`. For now, we save it to Firestore.
-
-      // 4. Save Admin Data to Firestore
+      // 5. Save Admin Data to Firestore
       await setDoc(doc(db, 'admins', uid), {
         createdAt: serverTimestamp(),
         email: computedEmail,
@@ -182,7 +194,6 @@ export default function AddAdmin() {
         },
         role: selectedRole,
         status: "Offline",
-        twoFactorEnabled: true,
         uid: uid
       });
 
@@ -287,13 +298,13 @@ export default function AddAdmin() {
                 <div className="space-y-2 sm:col-span-2">
                   <label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-300">Email Address (Auto-generated)</label>
                   <div className="relative group">
-                    <Mail className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 transition-colors" />
+                    <Mail className="absolute right-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 group-focus-within:text-brand-green transition-colors" />
                     <input
                       type="email"
                       value={computedEmail}
                       onChange={(e) => setComputedEmail(e.target.value)}
                       placeholder="Auto-generated"
-                      className="w-full bg-gray-100 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/50 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none cursor-not-allowed text-sm sm:text-base transition-colors duration-300"
+                      className="w-full bg-gray-100 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/50 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all cursor-not-allowed text-sm sm:text-base duration-300"
                     />
                   </div>
                 </div>
