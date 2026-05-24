@@ -20,7 +20,7 @@ import {
   browserLocalPersistence, // අලුතින් එකතු කළා
   browserSessionPersistence // අලුතින් එකතු කළා
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; 
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../config/firebase'; 
 
 // --- Framer Motion Variants ---
@@ -185,16 +185,27 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
+      // 1. admins collection එකේ මේ ඊමේල් එක තියෙනවද බලනවා
+      const adminsRef = collection(db, 'admins');
+      const q = query(adminsRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+
+      // 2. ඊමේල් එක නැත්නම් Error එකක් පෙන්නනවා
+      if (querySnapshot.empty) {
+        showToast("No admin account found with this email.", "error");
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. ඊමේල් එක තියෙනවා නම් Reset Link එක යවනවා
       await sendPasswordResetEmail(auth, email);
       await sendDiscordLog(`🟡 Password Reset Request: ${email}`);
       showToast("Password reset link sent to your email.", "success");
       setTimeout(() => setStep(1), 2000);
+
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        showToast("No account found with this email.", "error");
-      } else {
-        showToast("Failed to send reset link. Try again.", "error");
-      }
+      console.error(error);
+      showToast("Failed to send reset link. Try again.", "error");
     } finally {
       setIsLoading(false);
     }
