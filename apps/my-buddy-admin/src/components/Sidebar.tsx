@@ -19,8 +19,8 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
       <div
         onClick={() => navigate(path)}
         className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all group ${active
-            ? "bg-brand-green/10 text-brand-green"
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+          ? "bg-brand-green/10 text-brand-green"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
           } ${textClass}`}
       >
         <div className="flex items-center gap-3">
@@ -55,8 +55,7 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
         </span>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-w-[280px] custom-scrollbar">
-        <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-2 transition-colors duration-300">Overview</p>
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-w-[280px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-green transition-all">        <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-2 transition-colors duration-300">Overview</p>
         <NavItem icon={LayoutDashboard} label="Dashboard" path="/dashboard" />
         <NavItem icon={Activity} label="Analytics & Reports" path="/analytics" />
 
