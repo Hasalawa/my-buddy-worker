@@ -17,8 +17,8 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // Firestore වලින් දත්ත ගන්න මේක එකතු කළා
-import { auth, db } from '../config/firebase'; // db එකත් import කළා
+import { doc, getDoc } from 'firebase/firestore'; 
+import { auth, db } from '../config/firebase'; 
 
 // --- Framer Motion Variants ---
 const containerVariants: Variants = {
@@ -71,7 +71,7 @@ export default function AuthPage() {
     if (step === 2) {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
-      }, 500); // Animation එකට යන වෙලාව නිසා 300 වෙනුවට 500ක් දුන්නා
+      }, 500); 
     }
   }, [step]);
 
@@ -102,46 +102,34 @@ export default function AuthPage() {
       const user = userCredential.user;
       await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
       
-      // 2. Database එකෙන් බලනවා මෙයාට 2FA Enable කරලාද තියෙන්නේ කියලා
+      // 2. Admin ගේ Database විස්තර ගන්නවා (ෆෝන් නම්බර් එක ගන්න)
       const adminRef = doc(db, 'admins', user.uid);
       const adminSnap = await getDoc(adminRef);
       const adminData = adminSnap.exists() ? adminSnap.data() : null;
 
-      // 2FA On කරලා නම් විතරක් SMS යවනවා
-      if (adminData && adminData.twoFactorEnabled === true) {
-        showToast("Authentication successful! Sending SMS OTP...", "success");
+      showToast("Authentication successful! Sending SMS OTP...", "success");
 
-        if (!(window as any).recaptchaVerifier) {
-          try {
-            (window as any).recaptchaVerifier.clear();
-            (window as any).recaptchaVerifier = null;
-          } catch (error) {
-            console.error("Recaptcha clear error", error);
-          }
+      if (!(window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = null;
+        } catch (error) {
+          console.error("Recaptcha clear error", error);
         }
-
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-        });
-        const appVerifier = (window as any).recaptchaVerifier;
-
-        // Database එකේ තියෙන ෆෝන් නම්බර් එක ගන්නවා. නැත්නම් hardcode කරපු එක ගන්නවා
-        const adminPhoneNumber = adminData.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078"; 
-
-        const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
-        setConfirmationResult(confirmation); 
-
-        setTimeout(() => setStep(2), 1000); 
-
-      } else {
-        // 2FA Off කරලා නම් කෙලින්ම Dashboard එකට යවනවා
-        showToast("Authentication successful! Welcome back.", "success");
-        sessionStorage.setItem('is2FAVerified', 'true'); // Bypass the ProtectedRoute check
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
       }
+
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
+      const appVerifier = (window as any).recaptchaVerifier;
+
+      // Database එකේ තියෙන ෆෝන් නම්බර් එක ගන්නවා. නැත්නම් hardcode කරපු එක ගන්නවා
+      const adminPhoneNumber = adminData?.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078"; 
+
+      const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
+      setConfirmationResult(confirmation); 
+
+      setTimeout(() => setStep(2), 1000); 
 
     } catch (error: any) {
       console.error(error);
