@@ -1,13 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { 
-  User, Shield, Sliders, Bell, Save, 
-  Smartphone, Key, Mail, Building 
+  User, Shield, Sliders, Bell, Save, Key, Mail, Building 
 } from 'lucide-react';
-
-// updateDoc වෙනුවට setDoc import කරගත්තා
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -23,61 +18,9 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'system' | 'notifications'>('profile');
 
   // Toggle States
-  const [twoFactor, setTwoFactor] = useState(false);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [pushAlerts, setPushAlerts] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-
-  // Settings පිටුවට එද්දී Database එකේ තියෙන ඇත්ත 2FA තත්ත්වය අරන් Toggle එකට දානවා
-  useEffect(() => {
-    const fetchAdminSettings = async () => {
-      if (auth.currentUser) {
-        try {
-          const adminRef = doc(db, 'admins', auth.currentUser.uid);
-          const docSnap = await getDoc(adminRef);
-          
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Database එකේ true කියලා තිබ්බොත් විතරක් On කරනවා
-            if (data.twoFactorEnabled === true) {
-              setTwoFactor(true);
-            } else {
-              setTwoFactor(false);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching admin data:", error);
-        }
-      }
-    };
-
-    fetchAdminSettings();
-  }, []);
-
-  // 2FA Firebase එකට Update කරන Function එක
-  const handle2FAToggle = async () => {
-    const newValue = !twoFactor;
-    setTwoFactor(newValue); // මුලින්ම UI එක Update කරනවා
-
-    try {
-      if (auth.currentUser) {
-        const adminRef = doc(db, 'admins', auth.currentUser.uid);
-        
-        // අලුත් ඒව හැදෙන්නෙ නැති වෙන්න, පරණ එකම Update වෙන්න setDoc with merge:true පාවිච්චි කරනවා
-        await setDoc(adminRef, {
-          twoFactorEnabled: newValue
-        }, { merge: true });
-        
-        console.log(`✅ 2FA Status updated to: ${newValue}`);
-      } else {
-        console.warn("User not authenticated.");
-        setTwoFactor(!newValue);
-      }
-    } catch (error) {
-      console.error("❌ Error updating 2FA settings:", error);
-      setTwoFactor(!newValue); // Error එකක් ආවොත් කලින් තිබ්බ විදියටම හදනවා
-    }
-  };
 
   return (
     <div className="w-full relative overflow-x-clip pb-10">
@@ -103,7 +46,7 @@ export default function Settings() {
           {/* Vertical Sidebar Tabs */}
           <motion.div variants={itemVariants} className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
             <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={User} label="My Profile" />
-            <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={Shield} label="Security & 2FA" />
+            <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={Shield} label="Security" />
             <TabButton active={activeTab === 'system'} onClick={() => setActiveTab('system')} icon={Sliders} label="Platform Settings" />
             <TabButton active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} icon={Bell} label="Notifications" />
           </motion.div>
@@ -146,22 +89,6 @@ export default function Settings() {
                       <div className="hidden sm:block"></div>
                       <InputField label="New Password" type="password" placeholder="••••••••" icon={Key} />
                       <InputField label="Confirm New Password" type="password" placeholder="••••••••" icon={Key} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-800/50 pb-4 mb-6 transition-colors duration-300">Two-Factor Authentication (2FA)</h3>
-                    <div className="flex items-start sm:items-center justify-between gap-4 p-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/30 transition-colors duration-300">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-brand-green/10 text-brand-green rounded-lg hidden sm:block">
-                          <Smartphone size={24} />
-                        </div>
-                        <div>
-                          <h4 className="text-gray-900 dark:text-white font-medium mb-1 transition-colors duration-300">Require 2FA for Login</h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">Adds an extra layer of security using a mobile OTP.</p>
-                        </div>
-                      </div>
-                      <ToggleSwitch enabled={twoFactor} onToggle={handle2FAToggle} />
                     </div>
                   </div>
                 </motion.div>
