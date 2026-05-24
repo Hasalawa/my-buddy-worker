@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../features/auth/presentation/screens/login_screen.dart';
@@ -28,6 +29,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+
+    FlutterNativeSplash.remove();
 
     // මුළු ඇනිමේෂන් එකටම තත්පර 3ක් ලබා දී ඇත (30000ms Typo එක නිවැරදි කර ඇත)
     _animationController = AnimationController(
