@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Users, Briefcase, DollarSign, Activity, LayoutDashboard, 
-  Settings, LogOut, UserPlus, ShieldAlert, 
+  Users, Briefcase, DollarSign, Activity, LayoutDashboard,
+  Settings, LogOut, UserPlus, ShieldAlert,
   FileText, MessageSquareWarning,
   Smartphone
 } from "lucide-react";
@@ -18,16 +18,15 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
     return (
       <div
         onClick={() => navigate(path)}
-        className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all group ${
-          active 
-            ? "bg-brand-green/10 text-brand-green" 
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-        } ${textClass}`}
+        className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all group ${active
+          ? "bg-brand-green/10 text-brand-green"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+          } ${textClass}`}
       >
         <div className="flex items-center gap-3">
-          <Icon 
-            size={20} 
-            className={active ? "text-brand-green" : "text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"} 
+          <Icon
+            size={20}
+            className={active ? "text-brand-green" : "text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"}
           />
           <span className="font-medium text-sm whitespace-nowrap">{label}</span>
         </div>
@@ -56,8 +55,7 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
         </span>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-w-[280px] custom-scrollbar">
-        <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-2 transition-colors duration-300">Overview</p>
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-w-[280px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-green transition-all">        <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-2 transition-colors duration-300">Overview</p>
         <NavItem icon={LayoutDashboard} label="Dashboard" path="/dashboard" />
         <NavItem icon={Activity} label="Analytics & Reports" path="/analytics" />
 
@@ -65,7 +63,7 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
         <NavItem icon={Users} label="User Management" path="/users" badge="12" />
         <NavItem icon={Briefcase} label="Job Management" path="/jobs" />
         <NavItem icon={DollarSign} label="Payments & Finance" path="/finance" />
-        
+
         <p className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-2 mt-6 transition-colors duration-300">Moderation</p>
         <NavItem icon={MessageSquareWarning} label="Disputes & Support" path="/support" badge="3" />
         <NavItem icon={ShieldAlert} label="Flagged Content" path="/flagged" />

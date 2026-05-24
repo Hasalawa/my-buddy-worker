@@ -181,6 +181,7 @@ export default function AddAdmin() {
           viewFinancials: permissions.viewFinancials
         },
         role: selectedRole,
+        status: "Offline",
         twoFactorEnabled: true,
         uid: uid
       });
@@ -290,7 +291,7 @@ export default function AddAdmin() {
                     <input
                       type="email"
                       value={computedEmail}
-                      readOnly
+                      onChange={(e) => setComputedEmail(e.target.value)}
                       placeholder="Auto-generated"
                       className="w-full bg-gray-100 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/50 rounded-xl py-2.5 sm:py-3 pl-4 pr-10 outline-none cursor-not-allowed text-sm sm:text-base transition-colors duration-300"
                     />

@@ -34,7 +34,7 @@ export default function AdminLayout() {
     setIsPageLoading(true);
     const timer = setTimeout(() => {
       setIsPageLoading(false);
-    }, 1200); 
+    }, 1200);
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -68,10 +68,10 @@ export default function AdminLayout() {
             </div>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              
+
               {/* --- Theme Toggle Button --- */}
-              <button 
-                onClick={toggleTheme} 
+              <button
+                onClick={toggleTheme}
                 className="p-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -81,7 +81,7 @@ export default function AdminLayout() {
                 <Bell size={22} />
                 <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand-green rounded-full border-2 border-white dark:border-[#0a0a0a]"></span>
               </button>
-              
+
               <div className="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-200 dark:border-gray-800 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-green to-emerald-600 flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(0,204,68,0.2)]">
                   K
@@ -96,10 +96,9 @@ export default function AdminLayout() {
           </header>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto relative custom-scrollbar z-10">
-            <div className="p-6 lg:p-8">
-              <Outlet />
-            </div>
+          <div className="flex-1 overflow-y-auto relative [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-green transition-all z-10">            <div className="p-6 lg:p-8">
+            <Outlet />
+          </div>
           </div>
         </main>
       </div>
