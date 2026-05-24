@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +22,13 @@ flutter:
     - assets/images/logo.png
     - assets/images/logo_lightMode.png
     - assets/images/logo_man.png
+
+flutter_native_splash:
+  color: "#F9FAFB" 
+  color_dark: "#0A0A0A"
+  
+  android_12:
+    color: "#F9FAFB"
+    color_dark: "#0A0A0A"
+
+  fullscreen: true
