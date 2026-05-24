@@ -15,8 +15,8 @@ const seedSuperAdmin = async () => {
     console.log("⏳ Super Admin සෑදීම ආරම්භ කරමින්...");
 
     const userRecord = await auth.createUser({
-      email: "hasalawakehan@gmail.com",
-      password: "Hasa@12345",
+      email: "superadmin@mybuddyworker.com",
+      password: "Admin@12345",
       displayName: "Kehan Hasalawa",
     });
 
@@ -29,7 +29,7 @@ const seedSuperAdmin = async () => {
     await db.collection("admins").doc(uid).set({
       uid: uid,
       name: "Kehan Hasalawa",
-      email: "hasalawakehan@gmail.com",
+      email: "superadmin@mybuddyworker.com",
       mobile: "0771234567",
       nic: "123456789V",
       role: "Super Admin",
