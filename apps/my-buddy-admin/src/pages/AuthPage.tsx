@@ -15,7 +15,10 @@ import {
   signInWithEmailAndPassword, 
   sendPasswordResetEmail,
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  setPersistence, // අලුතින් එකතු කළා
+  browserLocalPersistence, // අලුතින් එකතු කළා
+  browserSessionPersistence // අලුතින් එකතු කළා
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore'; 
 import { auth, db } from '../config/firebase'; 
@@ -59,6 +62,7 @@ export default function AuthPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false); // Remember me State එක
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -97,6 +101,9 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
+      // 0. Remember Me Tick එක අනුව Persistence හදනවා
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+
       // 1. Firebase Email/Password Login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -353,7 +360,12 @@ export default function AuthPage() {
 
                     <div className="flex items-center justify-between mt-2">
                       <label className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300 transition-colors duration-300">
-                        <input type="checkbox" className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300" />
+                        <input 
+                          type="checkbox" 
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300" 
+                        />
                         Remember me
                       </label>
                       <button type="button" onClick={() => setStep(3)} className="text-sm font-medium text-brand-green hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
