@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_native_splash: ^2.4.7
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:
@@ -22,7 +23,15 @@ flutter:
     - assets/images/logo.png
     - assets/images/logo_lightMode.png
     - assets/images/logo_man.png
+    - assets/images/gear.png
+    - assets/images/round_dark.png
+    - assets/images/round_light.png
 
+fonts:
+    - family: Boldonse
+      fonts:
+        - asset: assets/fonts/Boldonse.ttf
+        
 flutter_native_splash:
   color: "#F9FAFB" 
   color_dark: "#0A0A0A"
