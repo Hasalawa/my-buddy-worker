@@ -337,8 +337,8 @@ export default function AuthPage() {
             className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] min-w-[320px]"
           >
             <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-md border ${toast.type === 'success' ? 'bg-brand-green/10 border-brand-green/30 text-brand-green' :
-                toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
-                  'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+              toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+                'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
               }`}>
               {toast.type === 'success' && <CheckCircle size={24} className="animate-pulse" />}
               {toast.type === 'error' && <XCircle size={24} />}

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import { Bell, Search, Menu, ChevronDown, Sun, Moon } from "lucide-react"; // Sun, Moon අලුතින් ගත්තා
+import { useState, useEffect, useRef } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { Bell, Search, Menu, ChevronDown, Sun, Moon, AlertCircle } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import Preloader from "../components/Preloader";
 
@@ -9,19 +9,55 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // --- Session Timeout Logic ---
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('adminUser');
+    setIsSessionExpired(true);
+  };
+
+  const resetTimer = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // විනාඩි 5කට (මිලි තත්පර 60,000) ටයිමරය සකසන්න
+    timeoutRef.current = setTimeout(handleLogout, 60000);
+  };
+
+  useEffect(() => {
+    // පළමු වතාවට Timer එක පටන් ගන්නවා
+    resetTimer();
+
+    // User ගේ ක්‍රියාකාරකම් (Mouse move, Key press, etc.) අඳුරගන්න Events
+    const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    const handleActivity = () => {
+      // Session එක දැනටමත් expire වෙලා නම් ආයෙත් timer reset කරන්නේ නෑ
+      if (!isSessionExpired) {
+        resetTimer();
+      }
+    };
+
+    events.forEach(event => window.addEventListener(event, handleActivity));
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+    };
+  }, [isSessionExpired]);
+  // -----------------------------
 
   // --- Theme Management Logic ---
-  // LocalStorage එකේ තියෙන Theme එක ගන්නවා. නැත්නම් Default 'dark' විදියට ගන්නවා.
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
-    // Theme එක මාරු වෙනකොට HTML tag එකට 'dark' class එක දානවා/අයින් කරනවා
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    // LocalStorage එකේ Save කරනවා
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -42,6 +78,43 @@ export default function AdminLayout() {
     <>
       <AnimatePresence mode="wait">
         {isPageLoading && <Preloader key="preloader" />}
+      </AnimatePresence>
+
+      {/* --- Session Expired Modal --- */}
+      <AnimatePresence>
+        {isSessionExpired && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="w-full max-w-sm bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-center transition-colors duration-300"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1], rotate: [0, -10, 10, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                className="w-16 h-16 mx-auto bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4"
+              >
+                <AlertCircle size={32} />
+              </motion.div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Session Expired</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                You have been inactive for 5 minutes. For your security, you have been logged out.
+              </p>
+              <button
+                onClick={() => navigate('/')}
+                className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-bold shadow-md"
+              >
+                OK
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Main Dashboard Layout (Theme Classes Added) */}
@@ -96,9 +169,10 @@ export default function AdminLayout() {
           </header>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto relative [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-green transition-all z-10">            <div className="p-6 lg:p-8">
-            <Outlet />
-          </div>
+          <div className="flex-1 overflow-y-auto relative [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-green transition-all z-10">
+            <div className="p-6 lg:p-8">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

@@ -9,7 +9,7 @@ export default function ProtectedRoute() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      
+
       // ✅ අලුතින් හැදූ adminUser object එක session storage එකේ තියෙනවද කියලා බලනවා
       const hasAdminSession = sessionStorage.getItem('adminUser') !== null;
 
