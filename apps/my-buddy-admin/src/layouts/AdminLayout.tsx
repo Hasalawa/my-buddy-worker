@@ -11,6 +11,25 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // --- Session Admin Data State ---
+  const [adminName, setAdminName] = useState("Loading...");
+  const [adminRole, setAdminRole] = useState("...");
+
+  useEffect(() => {
+    // sessionStorage එකෙන් adminUser data එක අරගෙන state එකට දානවා
+    const storedAdminData = sessionStorage.getItem("adminUser");
+    if (storedAdminData) {
+      try {
+        const adminObj = JSON.parse(storedAdminData);
+        if (adminObj.name) setAdminName(adminObj.name);
+        if (adminObj.role) setAdminRole(adminObj.role);
+      } catch (error) {
+        console.error("Failed to parse admin data", error);
+      }
+    }
+  }, []);
+  // -----------------------------
+
   // --- Session Timeout Logic ---
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -22,8 +41,8 @@ export default function AdminLayout() {
 
   const resetTimer = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // විනාඩි 5කට (මිලි තත්පර 60,000) ටයිමරය සකසන්න
-    timeoutRef.current = setTimeout(handleLogout, 60000);
+    // විනාඩි 5කට (මිලි තත්පර 300,000) ටයිමරය සකසන්න
+    timeoutRef.current = setTimeout(handleLogout, 300000);
   };
 
   useEffect(() => {
@@ -157,11 +176,12 @@ export default function AdminLayout() {
 
               <div className="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-200 dark:border-gray-800 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-green to-emerald-600 flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(0,204,68,0.2)]">
-                  K
+                  {/* නමේ මුල් අකුර පෙන්වන්න */}
+                  {adminName.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Kehan Hasalaka</p>
-                  <p className="text-xs text-brand-green font-medium">Super Admin</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{adminName}</p>
+                  <p className="text-xs text-brand-green font-medium">{adminRole}</p>
                 </div>
                 <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" />
               </div>
