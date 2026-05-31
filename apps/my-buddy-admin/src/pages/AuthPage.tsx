@@ -1,27 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { 
-  Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard, 
-  Smartphone, RefreshCw, Sun, Moon, ArrowLeft, 
-  CheckCircle, XCircle, AlertCircle, Loader2 
+import {
+  Mail, Lock, ArrowRight, ShieldCheck, Zap, LayoutDashboard,
+  Smartphone, RefreshCw, Sun, Moon, ArrowLeft,
+  CheckCircle, XCircle, AlertCircle, Loader2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
-import logo from '../assets/images/logo.png'; 
+import { useNavigate } from 'react-router-dom';
+import logo from '../assets/images/logo.png';
 import logoLight from '../assets/images/logo_lightMode.png';
 import { sendDiscordLog } from '../utils/discord';
 
 // Firebase imports 
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
   sendPasswordResetEmail,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  setPersistence, // අලුතින් එකතු කළා
-  browserLocalPersistence, // අලුතින් එකතු කළා
-  browserSessionPersistence // අලුතින් එකතු කළා
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, db } from '../config/firebase'; 
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore'; // අලුතින් updateDoc, serverTimestamp එකතු කළා
+import { auth, db } from '../config/firebase';
 
 // --- Framer Motion Variants ---
 const containerVariants: Variants = {
@@ -43,7 +43,15 @@ type ToastType = {
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  
+
+  // --- Check Active Session on Mount ---
+  useEffect(() => {
+    const storedAdmin = sessionStorage.getItem('adminUser');
+    if (storedAdmin) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
   // --- Theme Management ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -62,20 +70,21 @@ export default function AuthPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Remember me State එක
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Firebase SMS OTP Confirmation Object Save කරගන්න State එක
+  // Firebase SMS OTP & Admin Data States
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [currentAdminData, setCurrentAdminData] = useState<any>(null); // Step 2 එකට Data ගෙනියන්න
 
   // 2FA එකට ආවම පළවෙනි input එකට auto-focus කරන්න
   useEffect(() => {
     if (step === 2) {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
-      }, 500); 
+      }, 500);
     }
   }, [step]);
 
@@ -94,31 +103,48 @@ export default function AuthPage() {
   // --- Handlers ---
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) return showToast("Please fill in all fields.", "warning");
     if (!isValidEmail(email)) return showToast("Invalid email format.", "error");
-    if (password.length < 6) return showToast("Password must be at least 6 characters.", "warning");
 
     setIsLoading(true);
     try {
-      // 0. Remember Me Tick එක අනුව Persistence හදනවා
-      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      // 1. Check if admin exists in Firestore first
+      const adminsRef = collection(db, 'admins');
+      const q = query(adminsRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
 
-      // 1. Firebase Email/Password Login
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      if (querySnapshot.empty) {
+        setIsLoading(false);
+        return showToast("Invalid email or password.", "error");
+      }
+
+      const adminDoc = querySnapshot.docs[0];
+      const adminData = adminDoc.data();
+      const adminRefDoc = doc(db, 'admins', adminDoc.id);
+
+      // 2. Check if Suspended before trying to log in
+      if (adminData.status === "Suspended") {
+        setIsLoading(false);
+        return showToast("Your account has been suspended. Please contact the super admin.", "error");
+      }
+
+      // 3. Try Firebase Auth Login
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
+
+      // Login Success -> Reset password attempts
+      await updateDoc(adminRefDoc, { passwordAttempts: 0 });
       await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
-      
-      // 2. Admin ගේ Database විස්තර ගන්නවා (ෆෝන් නම්බර් එක ගන්න)
-      const adminRef = doc(db, 'admins', user.uid);
-      const adminSnap = await getDoc(adminRef);
-      const adminData = adminSnap.exists() ? adminSnap.data() : null;
+
+      // Save data for OTP step
+      setCurrentAdminData({ ...adminData, id: adminDoc.id });
 
       showToast("Authentication successful! Sending SMS OTP...", "success");
 
       if (!(window as any).recaptchaVerifier) {
         try {
-          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier?.clear();
           (window as any).recaptchaVerifier = null;
         } catch (error) {
           console.error("Recaptcha clear error", error);
@@ -130,18 +156,39 @@ export default function AuthPage() {
       });
       const appVerifier = (window as any).recaptchaVerifier;
 
-      // Database එකේ තියෙන ෆෝන් නම්බර් එක ගන්නවා. නැත්නම් hardcode කරපු එක ගන්නවා
-      const adminPhoneNumber = adminData?.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078"; 
+      const adminPhoneNumber = adminData.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078";
 
       const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
-      setConfirmationResult(confirmation); 
+      setConfirmationResult(confirmation);
 
-      setTimeout(() => setStep(2), 1000); 
+      setTimeout(() => setStep(2), 1000);
 
     } catch (error: any) {
       console.error(error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        showToast("Invalid email or password.", "error");
+
+      // 4. Handle Wrong Password Logic
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        const querySnapshot = await getDocs(query(collection(db, 'admins'), where("email", "==", email)));
+
+        if (!querySnapshot.empty) {
+          const adminDoc = querySnapshot.docs[0];
+          const adminData = adminDoc.data();
+          const adminRefDoc = doc(db, 'admins', adminDoc.id);
+
+          const maxAttempts = adminData.role === 'Super Admin' ? 3 : 5;
+          const currentAttempts = (adminData.passwordAttempts || 0) + 1;
+
+          if (currentAttempts > maxAttempts) {
+            await updateDoc(adminRefDoc, { status: 'Suspended', passwordAttempts: currentAttempts });
+            showToast("Account suspended due to too many failed login attempts.", "error");
+          } else {
+            await updateDoc(adminRefDoc, { passwordAttempts: currentAttempts });
+            const remaining = maxAttempts - currentAttempts + 1;
+            showToast(`Invalid password. ${remaining} attempts remaining.`, "warning");
+          }
+        } else {
+          showToast("Invalid email or password.", "error");
+        }
       } else if (error.code === 'auth/too-many-requests') {
         showToast("Too many attempts. Please try again later.", "warning");
       } else {
@@ -155,23 +202,70 @@ export default function AuthPage() {
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpCode = otp.join('');
-    
+
     if (otpCode.length < 6) return showToast("Please enter the complete 6-digit code.", "warning");
+    if (!currentAdminData) return showToast("Session expired. Please login again.", "error");
 
     setIsLoading(true);
+    const adminRefDoc = doc(db, 'admins', currentAdminData.id);
+
     try {
+      // Re-verify status just in case it was suspended in the meantime
+      const freshSnap = await getDoc(adminRefDoc);
+      if (freshSnap.exists() && freshSnap.data().status === 'Suspended') {
+        setIsLoading(false);
+        return showToast("Your account has been suspended.", "error");
+      }
+
       if (confirmationResult) {
         await confirmationResult.confirm(otpCode);
       }
-      
+
+      // OTP Success -> Reset OTP attempts, set Active, update loginTime
+      await updateDoc(adminRefDoc, {
+        otpAttempts: 0,
+        status: "Active",
+        loginTime: serverTimestamp()
+      });
+
+      // Save Admin Object to Session Storage
+      const updatedAdminData = {
+        ...freshSnap.data(),
+        otpAttempts: 0,
+        status: "Active",
+        loginTime: new Date().toISOString() // Save readable time for session
+      };
+      sessionStorage.setItem('adminUser', JSON.stringify(updatedAdminData));
+
       showToast("Security verified! Welcome back.", "success");
-      sessionStorage.setItem('is2FAVerified', 'true');
+
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
+
     } catch (error: any) {
       console.error("OTP Error:", error);
-      showToast("Invalid verification code. Try again.", "error");
+
+      // Handle Wrong OTP Logic
+      const freshSnap = await getDoc(adminRefDoc);
+      if (freshSnap.exists()) {
+        const adminData = freshSnap.data();
+        const maxAttempts = adminData.role === 'Super Admin' ? 3 : 5;
+        const currentAttempts = (adminData.otpAttempts || 0) + 1;
+
+        if (currentAttempts > maxAttempts) {
+          await updateDoc(adminRefDoc, { status: 'Suspended', otpAttempts: currentAttempts });
+          showToast("Account suspended due to too many failed OTP attempts.", "error");
+          setOtp(['', '', '', '', '', '']);
+          setStep(1); // Back to Secure Login
+        } else {
+          await updateDoc(adminRefDoc, { otpAttempts: currentAttempts });
+          const remaining = maxAttempts - currentAttempts + 1;
+          showToast(`Invalid OTP code. ${remaining} attempts remaining.`, "warning");
+        }
+      } else {
+        showToast("Invalid verification code. Try again.", "error");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -179,25 +273,22 @@ export default function AuthPage() {
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) return showToast("Please enter your email address.", "warning");
     if (!isValidEmail(email)) return showToast("Invalid email format.", "error");
 
     setIsLoading(true);
     try {
-      // 1. admins collection එකේ මේ ඊමේල් එක තියෙනවද බලනවා
       const adminsRef = collection(db, 'admins');
       const q = query(adminsRef, where("email", "==", email));
       const querySnapshot = await getDocs(q);
 
-      // 2. ඊමේල් එක නැත්නම් Error එකක් පෙන්නනවා
       if (querySnapshot.empty) {
         showToast("No admin account found with this email.", "error");
         setIsLoading(false);
         return;
       }
 
-      // 3. ඊමේල් එක තියෙනවා නම් Reset Link එක යවනවා
       await sendPasswordResetEmail(auth, email);
       await sendDiscordLog(`🟡 Password Reset Request: ${email}`);
       showToast("Password reset link sent to your email.", "success");
@@ -212,9 +303,9 @@ export default function AuthPage() {
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; 
-    if (value.length > 1) value = value[0]; 
-    
+    if (!/^\d*$/.test(value)) return;
+    if (value.length > 1) value = value[0];
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -232,7 +323,7 @@ export default function AuthPage() {
 
   return (
     <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300 relative">
-      
+
       {/* Firebase SMS යවන්න ඕන කරන අදෘශ්‍යමාන ReCaptcha Container එක */}
       <div id="recaptcha-container"></div>
 
@@ -245,11 +336,10 @@ export default function AuthPage() {
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
             className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] min-w-[320px]"
           >
-            <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-md border ${
-              toast.type === 'success' ? 'bg-brand-green/10 border-brand-green/30 text-brand-green' :
+            <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl backdrop-blur-md border ${toast.type === 'success' ? 'bg-brand-green/10 border-brand-green/30 text-brand-green' :
               toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
-              'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
-            }`}>
+                'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+              }`}>
               {toast.type === 'success' && <CheckCircle size={24} className="animate-pulse" />}
               {toast.type === 'error' && <XCircle size={24} />}
               {toast.type === 'warning' && <AlertCircle size={24} />}
@@ -262,8 +352,8 @@ export default function AuthPage() {
       </AnimatePresence>
 
       {/* --- Theme Toggle Button --- */}
-      <button 
-        onClick={toggleTheme} 
+      <button
+        onClick={toggleTheme}
         className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 p-3 rounded-full bg-white/50 dark:bg-black/50 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-brand-green dark:hover:text-brand-green transition-colors backdrop-blur-md shadow-sm"
       >
         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -277,7 +367,7 @@ export default function AuthPage() {
         {[...Array(6)].map((_, i) => (
           <motion.div key={`particle-${i}`} className="absolute w-1.5 h-1.5 bg-brand-green/30 rounded-full blur-[1px]" animate={{ y: [0, -100, 0], x: [0, Math.random() * 60 - 30, 0], opacity: [0.1, 0.6, 0.1], scale: [1, 1.5, 1] }} transition={{ duration: Math.random() * 5 + 7, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 3 }} style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }} />
         ))}
-        
+
         <div className="relative z-10 w-full max-w-lg mx-auto flex flex-col items-start gap-10">
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, type: "spring" }}>
             <motion.img src={logo} alt="My Buddy Worker" className="hidden dark:block h-32 lg:h-40 object-contain drop-shadow-2xl" animate={{ y: [-8, 8, -8] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
@@ -294,7 +384,7 @@ export default function AuthPage() {
             <motion.p variants={itemVariants} className="text-gray-500 dark:text-gray-400 text-lg font-light mb-10 transition-colors duration-300">
               Access the centralized control panel to manage users and monitor operations.
             </motion.p>
-            
+
             <div className="space-y-5">
               {[
                 { icon: ShieldCheck, text: "Enterprise-grade security" },
@@ -316,7 +406,7 @@ export default function AuthPage() {
 
       {/* ---------------- RIGHT SIDE: Forms Area ---------------- */}
       <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-24 relative bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-colors duration-300">
-        
+
         <motion.div className="absolute top-8 left-8 lg:hidden" animate={{ y: [-4, 4, -4] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
           <img src={logo} alt="Logo" className="hidden dark:block h-20 object-contain" />
           <img src={logoLight} alt="Logo" className="block dark:hidden h-20 object-contain" />
@@ -326,7 +416,7 @@ export default function AuthPage() {
           <motion.div className="absolute -inset-4 bg-brand-green/5 rounded-[2rem] blur-xl z-0" animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.98, 1.02, 0.98] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
 
           <div className="relative z-10 overflow-hidden px-1">
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.4 }} className="mb-8">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-green/10 border border-brand-green/20 text-brand-green text-xs font-semibold tracking-wide uppercase shadow-[0_0_15px_rgba(0,204,68,0.15)]">
                 <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
@@ -335,7 +425,7 @@ export default function AuthPage() {
             </motion.div>
 
             <AnimatePresence mode="wait">
-              
+
               {/* ================= STEP 1: LOGIN FORM ================= */}
               {step === 1 && (
                 <motion.div key="login-form" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
@@ -347,35 +437,35 @@ export default function AuthPage() {
                   <form className="space-y-5" onSubmit={handleLoginSubmit} noValidate>
                     <div className="group relative">
                       <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="admin@mybuddyworker.com" 
+                        placeholder="admin@mybuddyworker.com"
                         disabled={isLoading}
-                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50"
                       />
                     </div>
 
                     <div className="group relative">
                       <Lock className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••" 
+                        placeholder="••••••••"
                         disabled={isLoading}
-                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50"
                       />
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
                       <label className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300 transition-colors duration-300">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={rememberMe}
                           onChange={(e) => setRememberMe(e.target.checked)}
-                          className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300" 
+                          className="accent-brand-green rounded border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-brand-green focus:ring-brand-green/50 w-4 h-4 cursor-pointer transition-colors duration-300"
                         />
                         Remember me
                       </label>
@@ -420,7 +510,7 @@ export default function AuthPage() {
                           maxLength={1}
                           value={digit}
                           disabled={isLoading}
-                          autoFocus={index === 0} 
+                          autoFocus={index === 0}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           className="w-10 h-12 sm:w-12 sm:h-14 lg:w-14 lg:h-16 text-center text-xl sm:text-2xl font-bold bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all shadow-inner disabled:opacity-50"
@@ -437,7 +527,7 @@ export default function AuthPage() {
                           )}
                         </span>
                       </motion.button>
-                      
+
                       <button type="button" disabled={isLoading} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                         <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} /> Didn't receive the code? Resend
                       </button>
@@ -460,13 +550,13 @@ export default function AuthPage() {
                   <form className="space-y-5" onSubmit={handleForgotPasswordSubmit} noValidate>
                     <div className="group relative">
                       <Mail className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-brand-green transition-colors" />
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="admin@mybuddyworker.com" 
+                        placeholder="admin@mybuddyworker.com"
                         disabled={isLoading}
-                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50" 
+                        className="w-full bg-white dark:bg-gray-900/60 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 shadow-inner disabled:opacity-50"
                       />
                     </div>
 
