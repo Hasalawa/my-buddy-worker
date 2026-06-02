@@ -10,6 +10,10 @@ import {
 import logo from "../assets/images/logo.png";
 import logoLight from '../assets/images/logo_lightMode.png';
 
+// --- Firebase Imports අලුතින් එකතු කළා ---
+import { db } from '../config/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
 export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,10 +21,31 @@ export default function Sidebar({ sidebarOpen }: { sidebarOpen: boolean }) {
   // --- Logout Modal State ---
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const confirmLogout = () => {
-    sessionStorage.removeItem('adminUser');
-    setShowLogoutModal(false);
-    navigate('/');
+  // --- Logout Function එක Async කරලා Firebase Update එක දැම්මා ---
+  const confirmLogout = async () => {
+    try {
+      // Session storage එකෙන් දැනට ඉන්න admin ගේ විස්තර ගන්නවා
+      const storedAdminStr = sessionStorage.getItem('adminUser');
+      if (storedAdminStr) {
+        const adminObj = JSON.parse(storedAdminStr);
+        const adminId = adminObj.id || adminObj.uid; // ID එක ගන්නවා
+
+        if (adminId) {
+          // Firestore එකේ status එකයි logoutTime එකයි update කරනවා
+          await updateDoc(doc(db, 'admins', adminId), {
+            status: "Offline",
+            logoutTime: serverTimestamp()
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating logout status:", error);
+    } finally {
+      // අන්තිමට Session එක අයින් කරලා ලොගින් එකට යනවා
+      sessionStorage.removeItem('adminUser');
+      setShowLogoutModal(false);
+      navigate('/');
+    }
   };
 
   // NavItem එකට onClickOverride එකක් දැම්මා custom clicks අල්ලගන්න
