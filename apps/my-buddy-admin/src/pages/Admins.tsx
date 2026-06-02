@@ -62,6 +62,13 @@ export default function Admins() {
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
+        const storedAdminStr = sessionStorage.getItem('adminUser');
+        let currentAdminEmail = '';
+        if (storedAdminStr) {
+          const storedAdminObj = JSON.parse(storedAdminStr);
+          currentAdminEmail = storedAdminObj.email || '';
+        }
+
         const querySnapshot = await getDocs(collection(db, 'admins'));
         const fetchedAdmins = querySnapshot.docs.map(doc => {
           const data = doc.data();
@@ -92,7 +99,11 @@ export default function Admins() {
           };
         });
 
-        setAdminsData(fetchedAdmins);
+        const filteredFetchedAdmins = fetchedAdmins.filter(
+          (admin) => admin.email !== currentAdminEmail
+        );
+
+        setAdminsData(filteredFetchedAdmins);
 
       } catch (error) {
         console.error("Error fetching admins:", error);
