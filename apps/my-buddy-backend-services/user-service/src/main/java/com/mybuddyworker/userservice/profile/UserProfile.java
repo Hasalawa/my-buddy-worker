@@ -8,14 +8,17 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_profiles")
-@Data // Lombok වලින් Getters, Setters, toString ඉබේම හදනවා
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id; // අර Firebase වල තිබ්බ වගේම Unique ID එකක් එනවා
+    private String id;
+
+    @Column(unique = true)
+    private String keycloakId;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -26,7 +29,10 @@ public class UserProfile {
     @Column(unique = true)
     private String mobile;
 
-    private String role; // උදා: Student, Employer, Super Admin
+    @Column(unique = true)
+    private String nic;
+
+    private String role;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
