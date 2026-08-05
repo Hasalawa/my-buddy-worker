@@ -1,27 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      
-      // ✅ අර SMS එක හරියට ගහලා ආපු කෙනෙක්ද කියලා Session එකෙන් බලනවා
+    // 🚀 අලුත් Architecture එකට අනුව අපි Firebase අයින් කරලා තියෙන්නේ.
+    // Backend එකෙන් Session එකක් හදපු නිසා (HttpOnly Cookie), 
+    // දැනට අපි sessionStorage එකේ තියෙන 'is2FAVerified' එකෙන් user ලොග් වෙලාද කියලා බලනවා.
+    
+    const checkAuth = () => {
       const has2FA = sessionStorage.getItem('is2FAVerified') === 'true';
 
-      // දෙකම හරි නම් විතරක් ඇතුලට දානවා
-      if (user && has2FA) {
+      if (has2FA) {
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    // පොඩි delay එකක් දෙනවා Loading animation එක පේන්න
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (isAuthenticated === null) {
