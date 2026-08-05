@@ -186,6 +186,8 @@ export default function AddAdmin() {
         mobile: formattedMobile,
         name: name,
         nic: nic,
+        otpAttempts: 0,
+        passwordAttempts: 0,
         permissions: {
           manageJobs: permissions.manageJobs,
           manageUsers: permissions.manageUsers,
