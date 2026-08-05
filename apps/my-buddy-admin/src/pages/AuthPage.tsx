@@ -10,19 +10,6 @@ import logo from '../assets/images/logo.png';
 import logoLight from '../assets/images/logo_lightMode.png';
 import { sendDiscordLog } from '../utils/discord';
 
-// Firebase imports 
-import { 
-  signInWithEmailAndPassword, 
-  sendPasswordResetEmail,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  setPersistence, // අලුතින් එකතු කළා
-  browserLocalPersistence, // අලුතින් එකතු කළා
-  browserSessionPersistence // අලුතින් එකතු කළා
-} from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, db } from '../config/firebase'; 
-
 // --- Framer Motion Variants ---
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -62,13 +49,10 @@ export default function AuthPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Remember me State එක
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // Firebase SMS OTP Confirmation Object Save කරගන්න State එක
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
   // 2FA එකට ආවම පළවෙනි input එකට auto-focus කරන්න
   useEffect(() => {
@@ -91,7 +75,7 @@ export default function AuthPage() {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // --- Handlers ---
+  // --- Handlers (Now Backend Driven) ---
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -101,52 +85,32 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // 0. Remember Me Tick එක අනුව Persistence හදනවා
-      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      // API Call to Spring Boot Backend (e.g., API Gateway -> User Service)
+      // Note: credentials: 'include' is VERY IMPORTANT to receive HttpOnly Cookies from backend
+      /* 
+      const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, rememberMe }),
+        credentials: 'include' 
+      });
 
-      // 1. Firebase Email/Password Login
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      await sendDiscordLog(`🟢 Admin Login Success: ${email}`);
+      if (!response.ok) throw new Error("Invalid credentials");
+      const data = await response.json();
+      */
+
+      // [Mocking the backend delay for now until API is ready]
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // 2. Admin ගේ Database විස්තර ගන්නවා (ෆෝන් නම්බර් එක ගන්න)
-      const adminRef = doc(db, 'admins', user.uid);
-      const adminSnap = await getDoc(adminRef);
-      const adminData = adminSnap.exists() ? adminSnap.data() : null;
-
+      await sendDiscordLog(`🟢 Admin Login Attempt: ${email}`);
       showToast("Authentication successful! Sending SMS OTP...", "success");
 
-      if (!(window as any).recaptchaVerifier) {
-        try {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = null;
-        } catch (error) {
-          console.error("Recaptcha clear error", error);
-        }
-      }
-
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-      });
-      const appVerifier = (window as any).recaptchaVerifier;
-
-      // Database එකේ තියෙන ෆෝන් නම්බර් එක ගන්නවා. නැත්නම් hardcode කරපු එක ගන්නවා
-      const adminPhoneNumber = adminData?.mobile ? (adminData.mobile.startsWith('+') ? adminData.mobile : `+94${adminData.mobile.substring(1)}`) : "+94770000078"; 
-
-      const confirmation = await signInWithPhoneNumber(auth, adminPhoneNumber, appVerifier);
-      setConfirmationResult(confirmation); 
-
+      // Go to OTP step
       setTimeout(() => setStep(2), 1000); 
 
     } catch (error: any) {
       console.error(error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        showToast("Invalid email or password.", "error");
-      } else if (error.code === 'auth/too-many-requests') {
-        showToast("Too many attempts. Please try again later.", "warning");
-      } else {
-        showToast(error.message || "An error occurred during login.", "error");
-      }
+      showToast(error.message || "Invalid email or password.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -160,15 +124,28 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      if (confirmationResult) {
-        await confirmationResult.confirm(otpCode);
-      }
+      // API Call to Spring Boot Backend to Verify OTP
+      /*
+      const response = await fetch('http://localhost:8080/api/v1/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: otpCode }),
+        credentials: 'include' 
+      });
+
+      if (!response.ok) throw new Error("Invalid OTP");
+      */
+
+      // [Mocking the backend delay]
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       showToast("Security verified! Welcome back.", "success");
-      sessionStorage.setItem('is2FAVerified', 'true');
+      
+      // Since Session is handled via HttpOnly Cookies by backend, we just navigate!
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
+
     } catch (error: any) {
       console.error("OTP Error:", error);
       showToast("Invalid verification code. Try again.", "error");
@@ -185,27 +162,27 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // 1. admins collection එකේ මේ ඊමේල් එක තියෙනවද බලනවා
-      const adminsRef = collection(db, 'admins');
-      const q = query(adminsRef, where("email", "==", email));
-      const querySnapshot = await getDocs(q);
+      // API Call to Spring Boot Backend to Request Password Reset
+      /*
+      const response = await fetch('http://localhost:8080/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
 
-      // 2. ඊමේල් එක නැත්නම් Error එකක් පෙන්නනවා
-      if (querySnapshot.empty) {
-        showToast("No admin account found with this email.", "error");
-        setIsLoading(false);
-        return;
-      }
+      if (!response.ok) throw new Error("Failed to process request");
+      */
 
-      // 3. ඊමේල් එක තියෙනවා නම් Reset Link එක යවනවා
-      await sendPasswordResetEmail(auth, email);
+      // [Mocking the backend delay]
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       await sendDiscordLog(`🟡 Password Reset Request: ${email}`);
       showToast("Password reset link sent to your email.", "success");
       setTimeout(() => setStep(1), 2000);
 
     } catch (error: any) {
       console.error(error);
-      showToast("Failed to send reset link. Try again.", "error");
+      showToast("Failed to send reset link. Please check the email.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -233,9 +210,6 @@ export default function AuthPage() {
   return (
     <div className="h-screen w-full flex bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white font-sans overflow-hidden transition-colors duration-300 relative">
       
-      {/* Firebase SMS යවන්න ඕන කරන අදෘශ්‍යමාන ReCaptcha Container එක */}
-      <div id="recaptcha-container"></div>
-
       {/* ================= CUSTOM TOAST NOTIFICATION ================= */}
       <AnimatePresence>
         {toast.show && (
