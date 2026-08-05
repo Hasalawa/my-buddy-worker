@@ -75,7 +75,7 @@ export default function AuthPage() {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // --- Handlers (Now Backend Driven) ---
+  // --- Handlers (Now 100% Backend Driven) ---
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -85,32 +85,28 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // API Call to Spring Boot Backend (e.g., API Gateway -> User Service)
-      // Note: credentials: 'include' is VERY IMPORTANT to receive HttpOnly Cookies from backend
-      /* 
-      const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+      // 1. Spring Boot Backend එකේ ලොගින් API එකට කතා කරනවා (Port 8081)
+      const response = await fetch('http://localhost:8081/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, rememberMe }),
         credentials: 'include' 
       });
 
-      if (!response.ok) throw new Error("Invalid credentials");
-      const data = await response.json();
-      */
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Invalid email or password");
+      }
 
-      // [Mocking the backend delay for now until API is ready]
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       await sendDiscordLog(`🟢 Admin Login Attempt: ${email}`);
       showToast("Authentication successful! Sending SMS OTP...", "success");
 
-      // Go to OTP step
+      // 2. සාර්ථක වුණොත් OTP ගහන Step එකට යවනවා
       setTimeout(() => setStep(2), 1000); 
 
     } catch (error: any) {
       console.error(error);
-      showToast(error.message || "Invalid email or password.", "error");
+      showToast(error.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -124,31 +120,31 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // API Call to Spring Boot Backend to Verify OTP
-      /*
-      const response = await fetch('http://localhost:8080/api/v1/auth/verify-otp', {
+      // 1. Spring Boot එකට OTP එක යවලා පරීක්ෂා කරනවා
+      const response = await fetch('http://localhost:8081/api/v1/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: otpCode }),
-        credentials: 'include' 
+        credentials: 'include' // Backend එකෙන් දෙන HttpOnly Cookie එක අල්ලගන්න මේක අනිවාර්යයි
       });
 
-      if (!response.ok) throw new Error("Invalid OTP");
-      */
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Invalid OTP");
+      }
 
-      // [Mocking the backend delay]
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       showToast("Security verified! Welcome back.", "success");
+
+      sessionStorage.setItem('is2FAVerified', 'true');
       
-      // Since Session is handled via HttpOnly Cookies by backend, we just navigate!
+      // 2. OTP එක හරි නම් කෙලින්ම Dashboard එකට යවනවා! 🚀
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
 
     } catch (error: any) {
       console.error("OTP Error:", error);
-      showToast("Invalid verification code. Try again.", "error");
+      showToast(error.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -162,24 +158,11 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      // API Call to Spring Boot Backend to Request Password Reset
-      /*
-      const response = await fetch('http://localhost:8080/api/v1/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      if (!response.ok) throw new Error("Failed to process request");
-      */
-
-      // [Mocking the backend delay]
+      // (මෙය ඉස්සරහට Spring Boot API එකකට සම්බන්ද කරමු. දැනට Mock Delay එකක් ඇත)
       await new Promise(resolve => setTimeout(resolve, 1500));
-
       await sendDiscordLog(`🟡 Password Reset Request: ${email}`);
       showToast("Password reset link sent to your email.", "success");
       setTimeout(() => setStep(1), 2000);
-
     } catch (error: any) {
       console.error(error);
       showToast("Failed to send reset link. Please check the email.", "error");

@@ -9,12 +9,12 @@ export default function ProtectedRoute() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      
+      // ✅ අර SMS එක හරියට ගහලා ආපු කෙනෙක්ද කියලා Session එකෙන් බලනවා
+      const has2FA = sessionStorage.getItem('is2FAVerified') === 'true';
 
-      // ✅ අලුතින් හැදූ adminUser object එක session storage එකේ තියෙනවද කියලා බලනවා
-      const hasAdminSession = sessionStorage.getItem('adminUser') !== null;
-
-      // Firebase auth එකෙනුත් ලොග් වෙලා, Session එකෙත් Data තියෙනවා නම් විතරක් ඇතුලට දානවා
-      if (user && hasAdminSession) {
+      // දෙකම හරි නම් විතරක් ඇතුලට දානවා
+      if (user && has2FA) {
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
