@@ -61,6 +61,7 @@ public class AuthService {
 
         } catch (Exception e) {
             log.error("❌ Keycloak එකෙන් Password එක ප්‍රතික්ෂේප කළා: {}", email);
+            e.printStackTrace();
             return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
         }
 
